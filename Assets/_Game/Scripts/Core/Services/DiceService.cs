@@ -64,7 +64,7 @@ namespace BG3DiceSystem.Core.Services
             {
                 GameObject oldDie = _previewDiceObj;
                 _previewDiceObj = null;
-                oldDie.transform.DOScale(Vector3.zero, 0.25f, Ease.InBack).OnComplete(() => {
+                oldDie.transform.DOScale(Vector3.zero, 0.2f, Ease.InBack).OnComplete(() => {
                     if (oldDie != null) UnityEngine.Object.Destroy(oldDie);
                 });
             }
@@ -81,18 +81,19 @@ namespace BG3DiceSystem.Core.Services
 
             GameObject newDie = UnityEngine.Object.Instantiate(prefabToSpawn, floatPos, floatRot);
             int diceLayer = LayerMask.NameToLayer("Dice");
-            newDie.layer = diceLayer != -1 ? diceLayer : 0;
+            int targetLayer = diceLayer != -1 ? diceLayer : 0;
+            newDie.layer = targetLayer;
             foreach (Transform child in newDie.GetComponentsInChildren<Transform>(true))
             {
-                child.gameObject.layer = newDie.layer;
+                child.gameObject.layer = targetLayer;
             }
 
             Rigidbody rb = newDie.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
 
-            // Animate scale in pop
+            // Animate scale pop for prominent screen-center BG3 presentation
             newDie.transform.localScale = Vector3.zero;
-            newDie.transform.DOScale(Vector3.one * 1.3f, 0.35f, Ease.OutBack);
+            newDie.transform.DOScale(Vector3.one * 1.45f, 0.35f, Ease.OutBack);
 
             _previewDiceObj = newDie;
         }
