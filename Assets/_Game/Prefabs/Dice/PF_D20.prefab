@@ -393,8 +393,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 16, y: 16, z: 16}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 956058458583341056}
   m_Father: {fileID: 0}
@@ -517,47 +517,53 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb153633a1bdbb479eb05d7f2713050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceResultDetector
-  Faces:
+  Type: 5
+  FaceRotations:
   - FaceValue: 1
-    FaceTransform: {fileID: 8620031310372935714}
+    EulerRotation: {x: 339.1, y: 31.7, z: 354}
   - FaceValue: 2
-    FaceTransform: {fileID: 132105102288554995}
+    EulerRotation: {x: 35.3, y: 166.7, z: 139.8}
   - FaceValue: 3
-    FaceTransform: {fileID: 8723086489223335600}
+    EulerRotation: {x: 0, y: 322.6, z: 0}
   - FaceValue: 4
-    FaceTransform: {fileID: 2690921335730489255}
+    EulerRotation: {x: 324.7, y: 166.7, z: 220.2}
   - FaceValue: 5
-    FaceTransform: {fileID: 6589715228530748064}
+    EulerRotation: {x: 0, y: 100.8, z: 0}
   - FaceValue: 6
-    FaceTransform: {fileID: 6404200884559491280}
+    EulerRotation: {x: 290.9, y: 301.7, z: 42}
   - FaceValue: 7
-    FaceTransform: {fileID: 2761526718769312321}
+    EulerRotation: {x: 20.9, y: 31.7, z: 6}
   - FaceValue: 8
-    FaceTransform: {fileID: 5588535960925284498}
+    EulerRotation: {x: 35.3, y: 256.7, z: 316.2}
   - FaceValue: 9
-    FaceTransform: {fileID: 4673881062028538017}
+    EulerRotation: {x: 324.7, y: 256.7, z: 43.8}
   - FaceValue: 10
-    FaceTransform: {fileID: 148461914512928331}
+    EulerRotation: {x: 69.1, y: 301.7, z: 318}
   - FaceValue: 11
-    FaceTransform: {fileID: 6519018298705550440}
+    EulerRotation: {x: 290.9, y: 121.7, z: 258}
   - FaceValue: 12
-    FaceTransform: {fileID: 1642300487168573434}
+    EulerRotation: {x: 69.1, y: 121.7, z: 102}
   - FaceValue: 13
-    FaceTransform: {fileID: 8813895111543686072}
+    EulerRotation: {x: 324.7, y: 76.7, z: 331.8}
   - FaceValue: 14
-    FaceTransform: {fileID: 440416458550247383}
+    EulerRotation: {x: 339.1, y: 211.7, z: 66}
   - FaceValue: 15
-    FaceTransform: {fileID: 4686441797886852045}
+    EulerRotation: {x: 35.3, y: 76.7, z: 28.2}
   - FaceValue: 16
-    FaceTransform: {fileID: 2612630760863265347}
+    EulerRotation: {x: 0, y: 280.8, z: 0}
   - FaceValue: 17
-    FaceTransform: {fileID: 8660014795133221310}
+    EulerRotation: {x: 35.3, y: 346.7, z: 355.8}
   - FaceValue: 18
-    FaceTransform: {fileID: 8179725226592528454}
+    EulerRotation: {x: 0, y: 142.6, z: 0}
   - FaceValue: 19
-    FaceTransform: {fileID: 1439612668418840953}
+    EulerRotation: {x: 324.7, y: 346.7, z: 4.2}
   - FaceValue: 20
-    FaceTransform: {fileID: 4912207770534291741}
+    EulerRotation: {x: 20.9, y: 211.7, z: 294}
+  TestFaceValue: 1
+  ShowGizmos: 1
+  GizmoSize: 0.08
+  NormalFaceColor: {r: 0, g: 0.85, b: 1, a: 0.85}
+  SelectedFaceColor: {r: 1, g: 0.8, b: 0, a: 1}
 --- !u!114 &8085195202223455486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -572,6 +578,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceController
   RigidBody: {fileID: 907725404433515767}
   ResultDetector: {fileID: 8889907411892864333}
+  RollCenter: {x: 1000, y: 1000, z: 0}
+  RollZoneRadius: 1
 --- !u!1 &5044909256847920269
 GameObject:
   m_ObjectHideFlags: 0

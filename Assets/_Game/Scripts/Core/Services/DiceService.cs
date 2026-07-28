@@ -57,22 +57,14 @@ namespace BG3DiceSystem.Core.Services
         public void SpawnPreviewDice(DiceType type)
         {
             if (_isRolling) return;
-            Debug.Log($"[DiceService] Spawning preview dice of type: {type}");
+            Debug.Log($"[DiceService] Spawning single preview dice of type: {type} in Overlay Space.");
 
-            // Clean up any editor scene preview or active preview die
-            var sceneDefault = GameObject.Find("Default_D20_Preview");
-            if (sceneDefault != null && sceneDefault != _previewDiceObj)
-            {
-                UnityEngine.Object.Destroy(sceneDefault);
-            }
-
+            // Clean up existing preview die
             if (_previewDiceObj != null)
             {
                 GameObject oldDie = _previewDiceObj;
                 _previewDiceObj = null;
-                oldDie.transform.DOScale(Vector3.zero, 0.2f, Ease.InBack).OnComplete(() => {
-                    if (oldDie != null) UnityEngine.Object.Destroy(oldDie);
-                });
+                if (oldDie != null) UnityEngine.Object.Destroy(oldDie);
             }
 
             GameObject prefabToSpawn = GetPrefab(type);
@@ -82,8 +74,9 @@ namespace BG3DiceSystem.Core.Services
                 return;
             }
 
-            Vector3 floatPos = new Vector3(0f, 1.6f, 0f);
-            Quaternion floatRot = Quaternion.Euler(20f, 40f, 15f);
+            // Position in isolated Overlay Camera Space (1000, 1000, 0)
+            Vector3 floatPos = new Vector3(1000f, 1000f, 0f);
+            Quaternion floatRot = Quaternion.Euler(0f, 0f, 0f);
 
             GameObject newDie = UnityEngine.Object.Instantiate(prefabToSpawn, floatPos, floatRot);
             int diceLayer = LayerMask.NameToLayer("Dice");
@@ -97,21 +90,24 @@ namespace BG3DiceSystem.Core.Services
             Rigidbody rb = newDie.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
 
-            // Animate scale pop for prominent center presentation
-            newDie.transform.localScale = Vector3.zero;
-            newDie.transform.DOScale(Vector3.one * 1.5f, 0.35f, Ease.OutBack);
+            // Orient preview die face 1 to camera cleanly
+            DiceController controller = newDie.GetComponent<DiceController>();
+            if (controller != null)
+            {
+                newDie.transform.rotation = controller.CalculateFacingRotation(1, -Vector3.forward);
+            }
 
             _previewDiceObj = newDie;
         }
         #endregion
 
-        #region Roll Execution Operations
+        #region Roll Execution Operations (BG3 Authentic Unity Physics Roll & Dot-Product Detection)
         public async Task<List<int>> RollDiceAsync(RollMode mode)
         {
             if (_isRolling) return new List<int>();
             _isRolling = true;
 
-            // Destroy preview die
+            // Clean up preview die before rolling single die instance
             if (_previewDiceObj != null)
             {
                 UnityEngine.Object.Destroy(_previewDiceObj);
@@ -122,28 +118,31 @@ namespace BG3DiceSystem.Core.Services
 
             int count = (mode == RollMode.AdvantageTwoDice) ? 2 : 1;
             List<DiceController> currentRollControllers = new List<DiceController>();
+            List<int> results = new List<int>();
 
-            Vector3 baseSpawn = _settings != null ? _settings.SpawnPosition : new Vector3(0f, 3.5f, -0.5f);
-            Vector3 spread = _settings != null ? _settings.SpawnSpread : new Vector3(1.2f, 0.2f, 0f);
+            Vector3 centerPos = new Vector3(1000f, 1000f, 0f);
+            Vector3 spread = new Vector3(2.0f, 0f, 0f);
 
             GameObject prefabToSpawn = GetPrefab(_currentDiceType);
             if (prefabToSpawn == null)
             {
                 _isRolling = false;
-                return new List<int> { 10 };
+                return new List<int> { 20 };
             }
 
             for (int i = 0; i < count; i++)
             {
-                Vector3 spawnPos = baseSpawn + (i - (count - 1) * 0.5f) * spread;
+                Vector3 spawnPos = centerPos + (i - (count - 1) * 0.5f) * spread;
                 Quaternion spawnRot = UnityEngine.Random.rotation;
 
                 GameObject diceObj = UnityEngine.Object.Instantiate(prefabToSpawn, spawnPos, spawnRot);
+
                 int diceLayer = LayerMask.NameToLayer("Dice");
-                diceObj.layer = diceLayer != -1 ? diceLayer : 0;
+                int targetLayer = diceLayer != -1 ? diceLayer : 0;
+                diceObj.layer = targetLayer;
                 foreach (Transform child in diceObj.GetComponentsInChildren<Transform>(true))
                 {
-                    child.gameObject.layer = diceObj.layer;
+                    child.gameObject.layer = targetLayer;
                 }
 
                 DiceController controller = diceObj.GetComponent<DiceController>();
@@ -159,27 +158,32 @@ namespace BG3DiceSystem.Core.Services
                 currentRollControllers.Add(controller);
             }
 
+            // 1. Throw dice with realistic horizontal impulse and torque under Unity physics
             foreach (var die in currentRollControllers)
             {
-                die.ThrowDice();
+                if (die != null)
+                {
+                    die.ThrowDice();
+                }
             }
 
-            float maxTime = _settings != null ? _settings.MaxRollTimeoutSeconds : 4.5f;
+            // 2. Wait until Rigidbody comes to complete rest under physics simulation
+            float maxRollTimeout = 3.5f;
             float startTime = Time.time;
 
-            while (Time.time - startTime < maxTime)
+            while (Time.time - startTime < maxRollTimeout)
             {
-                bool allSleeping = true;
+                bool allSettled = true;
                 foreach (var die in currentRollControllers)
                 {
-                    if (!die.IsSleeping())
+                    if (die != null && !die.IsSleeping())
                     {
-                        allSleeping = false;
+                        allSettled = false;
                         break;
                     }
                 }
 
-                if (allSleeping && (Time.time - startTime > 0.6f))
+                if (allSettled && (Time.time - startTime > 0.4f))
                 {
                     break;
                 }
@@ -187,14 +191,45 @@ namespace BG3DiceSystem.Core.Services
                 await Task.Yield();
             }
 
-            List<int> results = new List<int>();
-            foreach (var die in currentRollControllers)
+            // 3. Detect upward face value facing overlay camera (-Vector3.forward)
+            Vector3 cameraDir = -Vector3.forward;
+
+            for (int i = 0; i < currentRollControllers.Count; i++)
             {
-                results.Add(die.GetUpwardValue());
+                var die = currentRollControllers[i];
+                if (die != null)
+                {
+                    if (die.RigidBody != null) die.RigidBody.isKinematic = true;
+
+                    int rollVal = die.GetUpwardValue();
+                    results.Add(rollVal);
+
+                    Vector3 targetMiddlePos = centerPos + (i - (currentRollControllers.Count - 1) * 0.5f) * new Vector3(1.0f, 0f, 0f);
+                    Quaternion targetRot = die.CalculateFacingRotation(rollVal, cameraDir);
+
+                    // Smoothly return die to middle spot with result face facing camera square & upright
+                    die.transform.DOMove(targetMiddlePos, 0.45f, Ease.OutQuad);
+                    die.transform.DORotateQuaternion(targetRot, 0.45f, Ease.OutQuad);
+
+                    OnDiceImpact?.Invoke(die.transform, 15f);
+                }
             }
 
             _isRolling = false;
+
+            // Re-spawn floating preview die after result display delay
+            _ = RespawnPreviewAfterDelay(2.5f);
+
             return results;
+        }
+
+        private async Task RespawnPreviewAfterDelay(float delaySeconds)
+        {
+            await Task.Delay((int)(delaySeconds * 1000));
+            if (!_isRolling && _spawnedDice.Count == 0)
+            {
+                SpawnPreviewDice(_currentDiceType);
+            }
         }
 
         public void ClearActiveDice()

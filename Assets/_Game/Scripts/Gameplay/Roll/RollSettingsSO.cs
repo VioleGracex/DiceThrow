@@ -14,5 +14,6 @@ namespace BG3DiceSystem.Gameplay.Roll
         [Header("Animation Durations")]
         public float ResultAnimationDuration = 1.2f;
         public float DelayBeforeResultDisplay = 0.4f;
+        public float ResultDisplayDurationSeconds = 3.5f;
     }
 }

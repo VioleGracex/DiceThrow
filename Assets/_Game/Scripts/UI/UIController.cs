@@ -170,18 +170,21 @@ namespace BG3DiceSystem.UI
         private void HandleSkillSelected(int index)
         {
             _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
             _skillService?.SelectSkill(index);
         }
 
         private void HandleModifierAdjusted(int delta)
         {
             _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
             _skillService?.AdjustModifier(delta);
         }
 
         private void HandleModeChanged(RollMode mode)
         {
             _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
             if (_rollService != null)
             {
                 _rollService.CurrentRollMode = mode;
@@ -191,6 +194,7 @@ namespace BG3DiceSystem.UI
         private void HandleDiceTypeSelected(DiceType type)
         {
             _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
             if (_diceService != null)
             {
                 _diceService.CurrentDiceType = type;

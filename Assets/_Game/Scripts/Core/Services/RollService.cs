@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using BG3DiceSystem.Core.Interfaces;
+using BG3DiceSystem.Gameplay.Dice;
 using BG3DiceSystem.Gameplay.Roll;
 
 namespace BG3DiceSystem.Core.Services
@@ -51,12 +52,11 @@ namespace BG3DiceSystem.Core.Services
 
             OnRollStarted?.Invoke();
             _audioService?.PlayDiceThrow();
-            _effectsService?.SetCameraZoom(true);
 
             List<int> diceValues = await _diceService.RollDiceAsync(CurrentRollMode);
 
             _audioService?.PlayHeavyLanding();
-            _effectsService?.TriggerCameraShake(0.8f);
+            _effectsService?.TriggerCameraShake(0.3f);
 
             int diceA = diceValues.Count > 0 ? diceValues[0] : 10;
             int diceB = diceValues.Count > 1 ? diceValues[1] : diceA;
@@ -69,9 +69,11 @@ namespace BG3DiceSystem.Core.Services
             int dc = _skillService.CurrentDC;
             int total = selectedValue + modifier;
 
-            bool isNat20 = (selectedValue == 20);
+            int maxDieValue = SkillService.GetMaxDieValue(_diceService != null ? _diceService.CurrentDiceType : DiceType.D20);
+
+            bool isNatMax = (selectedValue == maxDieValue);
             bool isNat1 = (selectedValue == 1);
-            bool isSuccess = isNat20 || (!isNat1 && total >= dc);
+            bool isSuccess = isNatMax || (!isNat1 && total >= dc);
 
             FinalRoll roll = new FinalRoll
             {
@@ -84,17 +86,18 @@ namespace BG3DiceSystem.Core.Services
                 Total = total,
                 DifficultyClass = dc,
                 IsSuccess = isSuccess,
-                IsCriticalSuccess = isNat20,
+                IsCriticalSuccess = isNatMax,
                 IsCriticalFailure = isNat1
             };
 
             _history.Insert(0, roll);
 
             // Handle FX & SFX
-            if (isNat20)
+            Vector3 overlayPos = new Vector3(1000f, 1000f, 0f);
+            if (isNatMax)
             {
                 _audioService?.PlayCriticalSuccess();
-                _effectsService?.PlayCriticalSuccessExplosion(Vector3.zero);
+                _effectsService?.PlayCriticalSuccessExplosion(overlayPos);
             }
             else if (isNat1)
             {
@@ -113,7 +116,6 @@ namespace BG3DiceSystem.Core.Services
             }
 
             await Task.Delay(400);
-            _effectsService?.SetCameraZoom(false);
 
             OnRollCompleted?.Invoke(roll);
             return roll;

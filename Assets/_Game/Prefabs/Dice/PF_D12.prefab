@@ -447,8 +447,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 16, y: 16, z: 16}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6835516916843298608}
   m_Father: {fileID: 0}
@@ -571,31 +571,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb153633a1bdbb479eb05d7f2713050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceResultDetector
-  Faces:
+  Type: 4
+  FaceRotations:
   - FaceValue: 1
-    FaceTransform: {fileID: 497839007326696866}
+    EulerRotation: {x: 31.7, y: 270, z: 328.3}
   - FaceValue: 2
-    FaceTransform: {fileID: 4295320896025644588}
+    EulerRotation: {x: 0, y: 31.7, z: 0}
   - FaceValue: 3
-    FaceTransform: {fileID: 3603529103219457122}
+    EulerRotation: {x: 328.3, y: 90, z: 328.3}
   - FaceValue: 4
-    FaceTransform: {fileID: 2675068777510303308}
+    EulerRotation: {x: 58.3, y: 0, z: 0}
   - FaceValue: 5
-    FaceTransform: {fileID: 5899493579955549510}
+    EulerRotation: {x: 58.3, y: 180, z: 180}
   - FaceValue: 6
-    FaceTransform: {fileID: 2820607661217285790}
+    EulerRotation: {x: 0, y: 211.7, z: 0}
   - FaceValue: 7
-    FaceTransform: {fileID: 8364659264054786978}
+    EulerRotation: {x: 328.3, y: 270, z: 31.7}
   - FaceValue: 8
-    FaceTransform: {fileID: 8994085644939618926}
+    EulerRotation: {x: 0, y: 328.3, z: 0}
   - FaceValue: 9
-    FaceTransform: {fileID: 7978342622722134139}
+    EulerRotation: {x: 0, y: 148.3, z: 0}
   - FaceValue: 10
-    FaceTransform: {fileID: 1703710092840547338}
+    EulerRotation: {x: 31.7, y: 90, z: 31.7}
   - FaceValue: 11
-    FaceTransform: {fileID: 2467833214296146706}
+    EulerRotation: {x: 301.7, y: 180, z: 180}
   - FaceValue: 12
-    FaceTransform: {fileID: 199301042324753572}
+    EulerRotation: {x: 301.7, y: 0, z: 0}
+  TestFaceValue: 1
+  ShowGizmos: 1
+  GizmoSize: 0.08
+  NormalFaceColor: {r: 0, g: 0.85, b: 1, a: 0.85}
+  SelectedFaceColor: {r: 1, g: 0.8, b: 0, a: 1}
 --- !u!114 &3344558027672854254
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -610,3 +616,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceController
   RigidBody: {fileID: 5687533314736436014}
   ResultDetector: {fileID: 2857641247845170163}
+  RollCenter: {x: 1000, y: 1000, z: 0}
+  RollZoneRadius: 1

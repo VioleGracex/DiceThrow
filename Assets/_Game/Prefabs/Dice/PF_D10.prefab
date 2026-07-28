@@ -32,8 +32,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 16, y: 16, z: 16}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6004234360485517572}
   m_Father: {fileID: 0}
@@ -156,27 +156,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb153633a1bdbb479eb05d7f2713050, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceResultDetector
-  Faces:
+  Type: 3
+  FaceRotations:
   - FaceValue: 1
-    FaceTransform: {fileID: 32309238116243239}
+    EulerRotation: {x: 34.9, y: 210.4, z: 261.6}
   - FaceValue: 2
-    FaceTransform: {fileID: 2396211874659282401}
+    EulerRotation: {x: 45, y: 0, z: 0}
   - FaceValue: 3
-    FaceTransform: {fileID: 3248628330452164263}
+    EulerRotation: {x: 34.9, y: 149.6, z: 98.4}
   - FaceValue: 4
-    FaceTransform: {fileID: 1388043103695949616}
+    EulerRotation: {x: 325.1, y: 329.5, z: 9.8}
   - FaceValue: 5
-    FaceTransform: {fileID: 5276492134271735931}
+    EulerRotation: {x: 315.1, y: 180, z: 180}
   - FaceValue: 6
-    FaceTransform: {fileID: 6501065257233865812}
+    EulerRotation: {x: 12.7, y: 316.4, z: 354.9}
   - FaceValue: 7
-    FaceTransform: {fileID: 155164544220184888}
+    EulerRotation: {x: 347.3, y: 223.6, z: 31.1}
   - FaceValue: 8
-    FaceTransform: {fileID: 5219599008136779408}
+    EulerRotation: {x: 12.6, y: 43.6, z: 5}
   - FaceValue: 9
-    FaceTransform: {fileID: 5691266524750406233}
+    EulerRotation: {x: 347.4, y: 136.4, z: 329.2}
   - FaceValue: 10
-    FaceTransform: {fileID: 1658185184021243184}
+    EulerRotation: {x: 325.1, y: 30.4, z: 350.2}
+  TestFaceValue: 1
+  ShowGizmos: 1
+  GizmoSize: 0.08
+  NormalFaceColor: {r: 0, g: 0.85, b: 1, a: 0.85}
+  SelectedFaceColor: {r: 1, g: 0.8, b: 0, a: 1}
 --- !u!114 &8149522754165128027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -191,6 +197,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Gameplay.Dice.DiceController
   RigidBody: {fileID: 6896837323672230944}
   ResultDetector: {fileID: 2943806854027465477}
+  RollCenter: {x: 1000, y: 1000, z: 0}
+  RollZoneRadius: 1
 --- !u!1 &1890149520720466766
 GameObject:
   m_ObjectHideFlags: 0

@@ -36,9 +36,10 @@ namespace BG3DiceSystem.Effects
         {
             if (ImpactDustParticles != null)
             {
+                SetParticleLayer(ImpactDustParticles.gameObject);
                 ImpactDustParticles.transform.position = position;
                 var main = ImpactDustParticles.main;
-                main.startSizeMultiplier = Mathf.Clamp(force * 0.15f, 0.3f, 1.5f);
+                main.startSizeMultiplier = Mathf.Clamp(force * 0.4f, 1.5f, 4f);
                 ImpactDustParticles.Play();
             }
         }
@@ -47,25 +48,40 @@ namespace BG3DiceSystem.Effects
         {
             if (SuccessGlowParticles != null)
             {
+                SetParticleLayer(SuccessGlowParticles.gameObject);
+                SuccessGlowParticles.transform.position = new Vector3(1000f, 1000f, 0f);
                 SuccessGlowParticles.Play();
             }
-            FlashScreen(new Color(0.2f, 0.85f, 0.35f, 0.25f), 0.5f);
+            FlashScreen(new Color(0.2f, 0.85f, 0.35f, 0.35f), 0.6f);
         }
 
         public void PlayFailureFlash()
         {
-            FlashScreen(new Color(0.85f, 0.2f, 0.2f, 0.3f), 0.5f);
+            FlashScreen(new Color(0.85f, 0.2f, 0.2f, 0.4f), 0.6f);
         }
 
         public void PlayCriticalSuccessExplosion(Vector3 position)
         {
             if (CriticalExplosionParticles != null)
             {
+                SetParticleLayer(CriticalExplosionParticles.gameObject);
                 CriticalExplosionParticles.transform.position = position;
                 CriticalExplosionParticles.Play();
             }
-            FlashScreen(new Color(1f, 0.84f, 0f, 0.5f), 0.8f);
-            TriggerCameraShake(1.5f);
+            FlashScreen(new Color(1f, 0.84f, 0f, 0.6f), 0.9f);
+            TriggerCameraShake(1.8f);
+        }
+
+        private void SetParticleLayer(GameObject target)
+        {
+            if (target == null) return;
+            int diceLayer = LayerMask.NameToLayer("Dice");
+            int layer = diceLayer != -1 ? diceLayer : 0;
+            target.layer = layer;
+            foreach (Transform child in target.GetComponentsInChildren<Transform>(true))
+            {
+                child.gameObject.layer = layer;
+            }
         }
 
         public void FlashScreen(Color flashColor, float duration)
@@ -88,16 +104,7 @@ namespace BG3DiceSystem.Effects
 
         public void SetCameraZoom(bool zoomedIn)
         {
-            if (MainCamera != null)
-            {
-                float targetFOV = zoomedIn ? _mainCamOriginalFOV * 0.88f : _mainCamOriginalFOV;
-                StartCoroutine(AnimateFOV(MainCamera, targetFOV, 0.5f));
-            }
-            if (OverlayDiceCamera != null)
-            {
-                float targetFOV = zoomedIn ? 30f : 35f;
-                StartCoroutine(AnimateFOV(OverlayDiceCamera, targetFOV, 0.5f));
-            }
+            // Camera position, FOV, and framing remain completely fixed throughout rolls
         }
 
         private IEnumerator ShakeRoutine(Transform target, Vector3 origin, float duration, float magnitude)

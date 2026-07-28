@@ -23,10 +23,17 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
     {
         public Action OnCompleteCallback;
         public bool IsActive = true;
+        public Ease EaseType = Ease.OutQuad;
 
         public CustomTween OnComplete(Action callback)
         {
             OnCompleteCallback += callback;
+            return this;
+        }
+
+        public CustomTween SetEase(Ease ease)
+        {
+            EaseType = ease;
             return this;
         }
 
@@ -149,8 +156,8 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
     {
         public static CustomTween DOScale(this Transform target, Vector3 endValue, float duration, Ease ease = Ease.OutQuad)
         {
-            CustomTween tween = new CustomTween();
-            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateScale(target, endValue, duration, ease, tween));
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateScale(target, endValue, duration, tween));
             return tween;
         }
 
@@ -159,7 +166,7 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             return target.DOScale(Vector3.one * endValue, duration, ease);
         }
 
-        private static IEnumerator AnimateScale(Transform target, Vector3 endValue, float duration, Ease ease, CustomTween tween)
+        private static IEnumerator AnimateScale(Transform target, Vector3 endValue, float duration, CustomTween tween)
         {
             if (target == null) yield break;
             Vector3 startValue = target.localScale;
@@ -168,7 +175,7 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             {
                 if (target == null || !tween.IsActive) yield break;
                 elapsed += Time.deltaTime;
-                float t = CustomDOTween.EvaluateEase(ease, elapsed / duration);
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
                 target.localScale = Vector3.Lerp(startValue, endValue, t);
                 yield return null;
             }
@@ -179,12 +186,12 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
 
         public static CustomTween DOMove(this Transform target, Vector3 endValue, float duration, Ease ease = Ease.OutQuad)
         {
-            CustomTween tween = new CustomTween();
-            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateMove(target, endValue, duration, ease, tween));
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateMove(target, endValue, duration, tween));
             return tween;
         }
 
-        private static IEnumerator AnimateMove(Transform target, Vector3 endValue, float duration, Ease ease, CustomTween tween)
+        private static IEnumerator AnimateMove(Transform target, Vector3 endValue, float duration, CustomTween tween)
         {
             if (target == null) yield break;
             Vector3 startValue = target.position;
@@ -193,7 +200,7 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             {
                 if (target == null || !tween.IsActive) yield break;
                 elapsed += Time.deltaTime;
-                float t = CustomDOTween.EvaluateEase(ease, elapsed / duration);
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
                 target.position = Vector3.Lerp(startValue, endValue, t);
                 yield return null;
             }
@@ -204,12 +211,12 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
 
         public static CustomTween DOFade(this CanvasGroup target, float endValue, float duration, Ease ease = Ease.OutQuad)
         {
-            CustomTween tween = new CustomTween();
-            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateFade(target, endValue, duration, ease, tween));
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateFade(target, endValue, duration, tween));
             return tween;
         }
 
-        private static IEnumerator AnimateFade(CanvasGroup target, float endValue, float duration, Ease ease, CustomTween tween)
+        private static IEnumerator AnimateFade(CanvasGroup target, float endValue, float duration, CustomTween tween)
         {
             if (target == null) yield break;
             float startValue = target.alpha;
@@ -218,7 +225,7 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             {
                 if (target == null || !tween.IsActive) yield break;
                 elapsed += Time.deltaTime;
-                float t = CustomDOTween.EvaluateEase(ease, elapsed / duration);
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
                 target.alpha = Mathf.Lerp(startValue, endValue, t);
                 yield return null;
             }
@@ -279,13 +286,13 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
 
         public static CustomTween DOAnchorPos(this RectTransform target, Vector2 endValue, float duration, Ease ease = Ease.OutQuad)
         {
-            CustomTween tween = new CustomTween();
-            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateAnchorPos(target, endValue, duration, ease, tween));
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateAnchorPos(target, endValue, duration, tween));
             else if (target != null) target.anchoredPosition = endValue;
             return tween;
         }
 
-        private static IEnumerator AnimateAnchorPos(RectTransform target, Vector2 endValue, float duration, Ease ease, CustomTween tween)
+        private static IEnumerator AnimateAnchorPos(RectTransform target, Vector2 endValue, float duration, CustomTween tween)
         {
             if (target == null) yield break;
             Vector2 startValue = target.anchoredPosition;
@@ -294,7 +301,7 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             {
                 if (target == null || !tween.IsActive) yield break;
                 elapsed += Time.deltaTime;
-                float t = CustomDOTween.EvaluateEase(ease, elapsed / duration);
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
                 target.anchoredPosition = Vector2.Lerp(startValue, endValue, t);
                 yield return null;
             }
@@ -305,13 +312,13 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
 
         public static CustomTween DORotate(this Transform target, Vector3 endValue, float duration, Ease ease = Ease.OutQuad)
         {
-            CustomTween tween = new CustomTween();
-            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateRotate(target, Quaternion.Euler(endValue), duration, ease, tween));
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateRotate(target, Quaternion.Euler(endValue), duration, tween));
             else if (target != null) target.localRotation = Quaternion.Euler(endValue);
             return tween;
         }
 
-        private static IEnumerator AnimateRotate(Transform target, Quaternion endValue, float duration, Ease ease, CustomTween tween)
+        private static IEnumerator AnimateRotate(Transform target, Quaternion endValue, float duration, CustomTween tween)
         {
             if (target == null) yield break;
             Quaternion startValue = target.localRotation;
@@ -320,11 +327,37 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             {
                 if (target == null || !tween.IsActive) yield break;
                 elapsed += Time.deltaTime;
-                float t = CustomDOTween.EvaluateEase(ease, elapsed / duration);
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
                 target.localRotation = Quaternion.Slerp(startValue, endValue, t);
                 yield return null;
             }
             if (target != null) target.localRotation = endValue;
+            tween.IsActive = false;
+            tween.OnCompleteCallback?.Invoke();
+        }
+
+        public static CustomTween DORotateQuaternion(this Transform target, Quaternion endValue, float duration, Ease ease = Ease.OutQuad)
+        {
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateRotateQuaternion(target, endValue, duration, tween));
+            else if (target != null) target.rotation = endValue;
+            return tween;
+        }
+
+        private static IEnumerator AnimateRotateQuaternion(Transform target, Quaternion endValue, float duration, CustomTween tween)
+        {
+            if (target == null) yield break;
+            Quaternion startValue = target.rotation;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                if (target == null || !tween.IsActive) yield break;
+                elapsed += Time.deltaTime;
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
+                target.rotation = Quaternion.Slerp(startValue, endValue, t);
+                yield return null;
+            }
+            if (target != null) target.rotation = endValue;
             tween.IsActive = false;
             tween.OnCompleteCallback?.Invoke();
         }
