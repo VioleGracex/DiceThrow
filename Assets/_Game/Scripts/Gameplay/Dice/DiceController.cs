@@ -19,6 +19,26 @@ namespace BG3DiceSystem.Gameplay.Dice
         {
             if (RigidBody == null) RigidBody = GetComponent<Rigidbody>();
             if (ResultDetector == null) ResultDetector = GetComponent<DiceResultDetector>();
+
+            if (RigidBody != null)
+            {
+                RigidBody.collisionDetectionMode = CollisionDetectionMode.Continuous;
+            }
+        }
+
+        private void Update()
+        {
+            // Safety catch: prevent die from tunneling below floor into space
+            if (transform.position.y < -1.5f)
+            {
+                Debug.LogWarning($"[DiceController] Die fell below floor threshold! Resetting position: {transform.position}");
+                transform.position = new Vector3(transform.position.x * 0.5f, 0.5f, transform.position.z * 0.5f);
+                if (RigidBody != null)
+                {
+                    RigidBody.linearVelocity = Vector3.zero;
+                    RigidBody.angularVelocity = Vector3.zero;
+                }
+            }
         }
 
         public void Initialize(DiceSettingsSO settings)
@@ -35,6 +55,7 @@ namespace BG3DiceSystem.Gameplay.Dice
             if (RigidBody == null) return;
 
             RigidBody.isKinematic = false;
+            RigidBody.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
             float minForce = _settings != null ? _settings.MinThrowForce : 7f;
             float maxForce = _settings != null ? _settings.MaxThrowForce : 11f;
