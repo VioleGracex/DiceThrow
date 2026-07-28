@@ -59,7 +59,13 @@ namespace BG3DiceSystem.Core.Services
             if (_isRolling) return;
             Debug.Log($"[DiceService] Spawning preview dice of type: {type}");
 
-            // Animate out existing preview die
+            // Clean up any editor scene preview or active preview die
+            var sceneDefault = GameObject.Find("Default_D20_Preview");
+            if (sceneDefault != null && sceneDefault != _previewDiceObj)
+            {
+                UnityEngine.Object.Destroy(sceneDefault);
+            }
+
             if (_previewDiceObj != null)
             {
                 GameObject oldDie = _previewDiceObj;
@@ -76,7 +82,7 @@ namespace BG3DiceSystem.Core.Services
                 return;
             }
 
-            Vector3 floatPos = new Vector3(0f, 1.8f, 0f);
+            Vector3 floatPos = new Vector3(0f, 1.6f, 0f);
             Quaternion floatRot = Quaternion.Euler(20f, 40f, 15f);
 
             GameObject newDie = UnityEngine.Object.Instantiate(prefabToSpawn, floatPos, floatRot);
@@ -91,9 +97,9 @@ namespace BG3DiceSystem.Core.Services
             Rigidbody rb = newDie.GetComponent<Rigidbody>();
             if (rb != null) rb.isKinematic = true;
 
-            // Animate scale pop for prominent screen-center BG3 presentation
+            // Animate scale pop for prominent center presentation
             newDie.transform.localScale = Vector3.zero;
-            newDie.transform.DOScale(Vector3.one * 1.45f, 0.35f, Ease.OutBack);
+            newDie.transform.DOScale(Vector3.one * 1.5f, 0.35f, Ease.OutBack);
 
             _previewDiceObj = newDie;
         }
