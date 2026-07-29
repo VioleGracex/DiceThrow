@@ -19,5 +19,6 @@ namespace BG3DiceSystem.Gameplay.Roll
         public bool IsSuccess;
         public bool IsCriticalSuccess;
         public bool IsCriticalFailure;
+        public System.Collections.Generic.List<BG3DiceSystem.Gameplay.Skills.ModifierData> AppliedModifiers;
     }
 }

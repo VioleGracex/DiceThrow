@@ -5,6 +5,7 @@ using Zenject;
 using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Gameplay.Dice;
 using BG3DiceSystem.Gameplay.Roll;
+using BG3DiceSystem.Gameplay.Skills;
 
 namespace BG3DiceSystem.UI
 {
@@ -126,6 +127,9 @@ namespace BG3DiceSystem.UI
                 SkillCheckView.OnModeChanged += HandleModeChanged;
                 SkillCheckView.OnDiceTypeSelected += HandleDiceTypeSelected;
                 SkillCheckView.OnRollClicked += HandleRollClicked;
+                SkillCheckView.OnAddModifierRequested += HandleAddModifierRequested;
+                SkillCheckView.OnAdjustModifierValueRequested += HandleAdjustModifierValueRequested;
+                SkillCheckView.OnRemoveModifierRequested += HandleRemoveModifierRequested;
             }
 
             if (_skillService != null)
@@ -150,6 +154,9 @@ namespace BG3DiceSystem.UI
                 SkillCheckView.OnModeChanged -= HandleModeChanged;
                 SkillCheckView.OnDiceTypeSelected -= HandleDiceTypeSelected;
                 SkillCheckView.OnRollClicked -= HandleRollClicked;
+                SkillCheckView.OnAddModifierRequested -= HandleAddModifierRequested;
+                SkillCheckView.OnAdjustModifierValueRequested -= HandleAdjustModifierValueRequested;
+                SkillCheckView.OnRemoveModifierRequested -= HandleRemoveModifierRequested;
             }
 
             if (_skillService != null)
@@ -179,6 +186,27 @@ namespace BG3DiceSystem.UI
             _audioService?.PlayButtonClick();
             ResultView?.HideResult();
             _skillService?.AdjustModifier(delta);
+        }
+
+        private void HandleAddModifierRequested(string name, int value)
+        {
+            _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
+            _skillService?.AddModifier(name, value);
+        }
+
+        private void HandleAdjustModifierValueRequested(string id, int delta)
+        {
+            _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
+            _skillService?.AdjustModifierValue(id, delta);
+        }
+
+        private void HandleRemoveModifierRequested(string id)
+        {
+            _audioService?.PlayButtonClick();
+            ResultView?.HideResult();
+            _skillService?.RemoveModifier(id);
         }
 
         private void HandleModeChanged(RollMode mode)
@@ -229,7 +257,7 @@ namespace BG3DiceSystem.UI
             {
                 var skill = _skillService.CurrentSkill;
                 SkillCheckView.UpdateSkillDisplay(skill.SkillName, skill.DifficultyClass, skill.Description);
-                SkillCheckView.UpdateModifierDisplay(_skillService.CurrentModifier);
+                UpdateModifierDisplay();
             }
         }
 
@@ -238,6 +266,7 @@ namespace BG3DiceSystem.UI
             if (_skillService != null && SkillCheckView != null)
             {
                 SkillCheckView.UpdateModifierDisplay(_skillService.CurrentModifier);
+                SkillCheckView.RenderModifierCards(_skillService.ActiveModifiers, _skillService.MaxModifierCards);
             }
         }
         #endregion

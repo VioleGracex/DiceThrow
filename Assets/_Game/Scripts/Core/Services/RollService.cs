@@ -73,7 +73,25 @@ namespace BG3DiceSystem.Core.Services
 
             bool isNatMax = (selectedValue == maxDieValue);
             bool isNat1 = (selectedValue == 1);
-            bool isSuccess = isNatMax || (!isNat1 && total >= dc);
+            bool isSuccess;
+
+            if (isNatMax)
+            {
+                // Natural 20 (or max die value) is ALWAYS an automatic critical success win, regardless of DC (e.g. DC 22)
+                isSuccess = true;
+                Debug.Log($"[RollService] CRITICAL SUCCESS! Natural {selectedValue} hit on max die value ({maxDieValue}). Automatic win against DC {dc}!");
+            }
+            else if (isNat1)
+            {
+                // Natural 1 is ALWAYS an automatic critical failure loss, regardless of modifiers
+                isSuccess = false;
+                Debug.Log($"[RollService] CRITICAL FAILURE! Natural 1 rolled. Automatic loss against DC {dc}.");
+            }
+            else
+            {
+                // Standard roll comparison against DC
+                isSuccess = (total >= dc);
+            }
 
             FinalRoll roll = new FinalRoll
             {
@@ -87,7 +105,8 @@ namespace BG3DiceSystem.Core.Services
                 DifficultyClass = dc,
                 IsSuccess = isSuccess,
                 IsCriticalSuccess = isNatMax,
-                IsCriticalFailure = isNat1
+                IsCriticalFailure = isNat1,
+                AppliedModifiers = _skillService.ActiveModifiers != null ? new List<BG3DiceSystem.Gameplay.Skills.ModifierData>(_skillService.ActiveModifiers) : new List<BG3DiceSystem.Gameplay.Skills.ModifierData>()
             };
 
             _history.Insert(0, roll);

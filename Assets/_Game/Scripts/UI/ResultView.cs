@@ -10,27 +10,17 @@ namespace BG3DiceSystem.UI
     {
         [Header("Containers & Canvas")]
         public CanvasGroup ViewCanvasGroup;
-        public GameObject DieAContainer;
-        public GameObject DieBContainer;
 
         [Header("Value Texts")]
-        public TextMeshProUGUI DCText;
-        public TextMeshProUGUI DieAText;
-        public TextMeshProUGUI DieBText;
         public TextMeshProUGUI TakenText;
-        public TextMeshProUGUI ModifierText;
         public TextMeshProUGUI TotalText;
         public TextMeshProUGUI StatusBadgeText;
         public Image StatusBadgeBackground;
 
-        [Header("Modifier Cards (BG3-style)")]
-        [Tooltip("Value text inside Card_Modifier")]
-        public TextMeshProUGUI CardModifierValueText;
-        [Tooltip("Value text inside Card_ProfBonus")]
-        public TextMeshProUGUI CardProfBonusValueText;
-        [Tooltip("Value text inside Card_DC")]
-        public TextMeshProUGUI CardDCValueText;
+        [Header("Modifier Cards Row")]
         public GameObject ModifierCardsRow;
+        public Transform ResultCardsContainer;
+        public ScrollRect ResultCardsScrollRect;
 
         [Header("Settings Reference")]
         public RollSettingsSO Settings;
@@ -65,18 +55,11 @@ namespace BG3DiceSystem.UI
         {
             ViewCanvasGroup.alpha = 1f;
 
-            // 1. Show Difficulty Class Header at top
-            if (DCText != null)
-            {
-                DCText.text = $"DIFFICULTY CLASS {roll.DifficultyClass}";
-                DCText.gameObject.SetActive(true);
-            }
-
             // Hide status badge initially for sequential reveal
             if (StatusBadgeText != null) StatusBadgeText.gameObject.SetActive(false);
             if (StatusBadgeBackground != null) StatusBadgeBackground.gameObject.SetActive(false);
 
-            // 2. Show initial raw die result right under the die
+            // 1. Show initial raw die result right under the die
             int rawVal = roll.SelectedDiceValue;
             if (TotalText != null)
             {
@@ -85,13 +68,9 @@ namespace BG3DiceSystem.UI
                 TotalText.transform.DOPunchScale(Vector3.one * 0.25f, 0.3f);
             }
 
-            if (DieBContainer != null) DieBContainer.SetActive(roll.Mode == RollMode.AdvantageTwoDice);
-            if (DieAText != null) DieAText.text = roll.DiceValueA.ToString();
-            if (DieBText != null) DieBText.text = roll.DiceValueB.ToString();
-
             yield return new WaitForSeconds(0.4f);
 
-            // 3. Populate & reveal modifier cards row
+            // 2. Populate & reveal modifier cards row
             UpdateModifierCards(roll);
             if (ModifierCardsRow != null)
             {
@@ -99,12 +78,9 @@ namespace BG3DiceSystem.UI
                 ModifierCardsRow.transform.DOPunchScale(Vector3.one * 0.12f, 0.35f);
             }
 
-            // Keep legacy ModifierText hidden (replaced by cards)
-            if (ModifierText != null) ModifierText.gameObject.SetActive(false);
-
             yield return new WaitForSeconds(0.35f);
 
-            // Animate value counting up from raw roll to final total
+            // 3. Animate value counting up from raw roll to final total
             if (roll.Modifier != 0)
             {
                 int startVal = rawVal;
@@ -176,17 +152,94 @@ namespace BG3DiceSystem.UI
 
         private void UpdateModifierCards(FinalRoll roll)
         {
-            // Card 1: Modifier (skill bonus)
-            if (CardModifierValueText != null)
-                CardModifierValueText.text = (roll.Modifier >= 0 ? "+" : "") + roll.Modifier;
+            if (ResultCardsContainer == null && ModifierCardsRow != null)
+            {
+                var sr = ModifierCardsRow.GetComponentInChildren<ScrollRect>(true);
+                if (sr != null && sr.content != null)
+                {
+                    ResultCardsContainer = sr.content;
+                    ResultCardsScrollRect = sr;
+                }
+            }
 
-            // Card 2: Proficiency bonus (stored in Modifier for now; label distinguishes it)
-            if (CardProfBonusValueText != null)
-                CardProfBonusValueText.text = (roll.Modifier >= 0 ? "+" : "") + roll.Modifier;
+            if (ResultCardsContainer != null)
+            {
+                // Clear old spawned card boxes
+                foreach (Transform child in ResultCardsContainer)
+                {
+                    if (Application.isPlaying) Destroy(child.gameObject);
+                    else DestroyImmediate(child.gameObject);
+                }
 
-            // Card 3: DC
-            if (CardDCValueText != null)
-                CardDCValueText.text = "DC " + roll.DifficultyClass;
+                var modsToDisplay = roll.AppliedModifiers;
+                if (modsToDisplay != null && modsToDisplay.Count > 0)
+                {
+                    foreach (var mod in modsToDisplay)
+                    {
+                        if (mod == null) continue;
+                        CreateResultCardBox(ResultCardsContainer, mod.Name, mod.Value);
+                    }
+                }
+                else
+                {
+                    // Fallback single modifier card if no list
+                    CreateResultCardBox(ResultCardsContainer, "MODIFIER", roll.Modifier);
+                }
+
+                LayoutRebuilder.ForceRebuildLayoutImmediate(ResultCardsContainer as RectTransform);
+            }
+        }
+
+        private void CreateResultCardBox(Transform parent, string title, int value)
+        {
+            GameObject cardObj = new GameObject("Card_" + title, typeof(RectTransform), typeof(Image), typeof(Outline));
+            cardObj.transform.SetParent(parent, false);
+
+            RectTransform rect = cardObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(140f, 65f);
+
+            Image cardBg = cardObj.GetComponent<Image>();
+            cardBg.color = new Color(0.14f, 0.14f, 0.18f, 0.95f);
+
+            Outline cardOutline = cardObj.GetComponent<Outline>();
+            cardOutline.effectColor = new Color(0.95f, 0.78f, 0.35f, 0.85f);
+            cardOutline.effectDistance = new Vector2(2f, -2f);
+
+            // Header Label (e.g. ATHLETICS, WISDOM, PROFICIENCY, GUIDANCE, BLESS)
+            GameObject headerObj = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            headerObj.transform.SetParent(cardObj.transform, false);
+            RectTransform hRect = headerObj.GetComponent<RectTransform>();
+            hRect.anchorMin = new Vector2(0f, 0.55f);
+            hRect.anchorMax = new Vector2(1f, 1f);
+            hRect.offsetMin = new Vector2(4f, 0f);
+            hRect.offsetMax = new Vector2(-4f, -4f);
+            TextMeshProUGUI hTMP = headerObj.GetComponent<TextMeshProUGUI>();
+            hTMP.text = string.IsNullOrEmpty(title) ? "MODIFIER" : title.ToUpper();
+            hTMP.fontSize = 11;
+            hTMP.fontStyle = FontStyles.Bold;
+            hTMP.color = new Color(0.95f, 0.78f, 0.35f, 0.9f);
+            hTMP.alignment = TextAlignmentOptions.Center;
+
+            // Value Text (e.g. +2, +1, +0, -1) with floating animation
+            GameObject valObj = new GameObject("Value", typeof(RectTransform), typeof(TextMeshProUGUI));
+            valObj.transform.SetParent(cardObj.transform, false);
+            RectTransform vRect = valObj.GetComponent<RectTransform>();
+            vRect.anchorMin = new Vector2(0f, 0f);
+            vRect.anchorMax = new Vector2(1f, 0.55f);
+            vRect.offsetMin = new Vector2(4f, 2f);
+            vRect.offsetMax = new Vector2(-4f, 0f);
+            TextMeshProUGUI vTMP = valObj.GetComponent<TextMeshProUGUI>();
+            vTMP.text = (value >= 0 ? "+" : "") + value;
+            vTMP.fontSize = 20;
+            vTMP.fontStyle = FontStyles.Bold;
+            vTMP.color = Color.white;
+            vTMP.alignment = TextAlignmentOptions.Center;
+
+            // Floating upward DOTween animation
+            Vector2 targetPos = vRect.anchoredPosition;
+            vRect.anchoredPosition = targetPos - new Vector2(0f, 15f);
+            vRect.DOAnchorPos(targetPos, 0.35f, Ease.OutBack);
+            vTMP.transform.DOPunchScale(Vector3.one * 0.2f, 0.35f);
         }
 
         private Color GetBadgeColor(FinalRoll roll)
