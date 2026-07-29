@@ -23,6 +23,15 @@ namespace BG3DiceSystem.UI
         public TextMeshProUGUI StatusBadgeText;
         public Image StatusBadgeBackground;
 
+        [Header("Modifier Cards (BG3-style)")]
+        [Tooltip("Value text inside Card_Modifier")]
+        public TextMeshProUGUI CardModifierValueText;
+        [Tooltip("Value text inside Card_ProfBonus")]
+        public TextMeshProUGUI CardProfBonusValueText;
+        [Tooltip("Value text inside Card_DC")]
+        public TextMeshProUGUI CardDCValueText;
+        public GameObject ModifierCardsRow;
+
         [Header("Settings Reference")]
         public RollSettingsSO Settings;
 
@@ -49,53 +58,7 @@ namespace BG3DiceSystem.UI
                 _resultSequenceCoroutine = null;
             }
 
-            // Ensure layout text is positioned away from 3D die area
-            PositionUIElements();
-
             _resultSequenceCoroutine = StartCoroutine(AnimateBG3ResultSequence(roll));
-        }
-
-        private void PositionUIElements()
-        {
-            // Top header above die area (y = +210)
-            if (DCText != null)
-            {
-                RectTransform rt = DCText.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, 210f);
-            }
-
-            // Directly under die area (y = -110)
-            if (TotalText != null)
-            {
-                RectTransform rt = TotalText.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -110f);
-            }
-
-            // Advantage text under die (y = -140)
-            if (TakenText != null)
-            {
-                RectTransform rt = TakenText.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -140f);
-            }
-
-            // Bonus card area under die (y = -175)
-            if (ModifierText != null)
-            {
-                RectTransform rt = ModifierText.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -175f);
-            }
-
-            // Status outcome badge at bottom (y = -250)
-            if (StatusBadgeBackground != null)
-            {
-                RectTransform rt = StatusBadgeBackground.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -250f);
-            }
-            else if (StatusBadgeText != null)
-            {
-                RectTransform rt = StatusBadgeText.GetComponent<RectTransform>();
-                if (rt != null) rt.anchoredPosition = new Vector2(0f, -250f);
-            }
         }
 
         private System.Collections.IEnumerator AnimateBG3ResultSequence(FinalRoll roll)
@@ -128,19 +91,22 @@ namespace BG3DiceSystem.UI
 
             yield return new WaitForSeconds(0.4f);
 
-            // 3. Show Modifier Bonus Card and animate bonus addition (+Modifier)
+            // 3. Populate & reveal modifier cards row
+            UpdateModifierCards(roll);
+            if (ModifierCardsRow != null)
+            {
+                ModifierCardsRow.SetActive(true);
+                ModifierCardsRow.transform.DOPunchScale(Vector3.one * 0.12f, 0.35f);
+            }
+
+            // Keep legacy ModifierText hidden (replaced by cards)
+            if (ModifierText != null) ModifierText.gameObject.SetActive(false);
+
+            yield return new WaitForSeconds(0.35f);
+
+            // Animate value counting up from raw roll to final total
             if (roll.Modifier != 0)
             {
-                if (ModifierText != null)
-                {
-                    ModifierText.text = $"+{roll.Modifier} Skill Bonus";
-                    ModifierText.gameObject.SetActive(true);
-                    ModifierText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f);
-                }
-
-                yield return new WaitForSeconds(0.35f);
-
-                // Animate value counting up from raw roll to final total
                 int startVal = rawVal;
                 int endVal = roll.Total;
                 float duration = 0.4f;
@@ -157,10 +123,6 @@ namespace BG3DiceSystem.UI
                     TotalText.text = endVal.ToString();
                     TotalText.transform.DOPunchScale(Vector3.one * 0.35f, 0.35f);
                 }
-            }
-            else
-            {
-                if (ModifierText != null) ModifierText.gameObject.SetActive(false);
             }
 
             yield return new WaitForSeconds(0.3f);
@@ -207,6 +169,24 @@ namespace BG3DiceSystem.UI
             {
                 ViewCanvasGroup.DOFade(0f, 0.3f, Ease.InQuad);
             }
+
+            if (ModifierCardsRow != null)
+                ModifierCardsRow.SetActive(false);
+        }
+
+        private void UpdateModifierCards(FinalRoll roll)
+        {
+            // Card 1: Modifier (skill bonus)
+            if (CardModifierValueText != null)
+                CardModifierValueText.text = (roll.Modifier >= 0 ? "+" : "") + roll.Modifier;
+
+            // Card 2: Proficiency bonus (stored in Modifier for now; label distinguishes it)
+            if (CardProfBonusValueText != null)
+                CardProfBonusValueText.text = (roll.Modifier >= 0 ? "+" : "") + roll.Modifier;
+
+            // Card 3: DC
+            if (CardDCValueText != null)
+                CardDCValueText.text = "DC " + roll.DifficultyClass;
         }
 
         private Color GetBadgeColor(FinalRoll roll)

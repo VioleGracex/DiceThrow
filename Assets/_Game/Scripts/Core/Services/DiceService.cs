@@ -167,38 +167,77 @@ namespace BG3DiceSystem.Core.Services
                 }
             }
 
-            // 2. Wait until Rigidbody comes to complete rest under physics simulation
-            float maxRollTimeout = 3.5f;
+            // 2. Wait until Rigidbody is nearly at rest, then start blending toward final face
+            float maxRollTimeout = 4.0f;
             float startTime = Time.time;
+            bool correctionStarted = false;
+            Vector3 cameraDir = -Vector3.forward; // overlay camera faces -Z
+
+            // Thresholds — start face correction when die is very slow (not fully stopped)
+            float earlyCorrectVelSq  = 0.04f;  // sqrMagnitude ~ speed 0.2 m/s
+            float earlyCorrectAngSq  = 0.09f;  // sqrMagnitude ~ 0.3 rad/s
 
             while (Time.time - startTime < maxRollTimeout)
             {
                 bool allSettled = true;
+                bool allSlow    = true;
+
                 foreach (var die in currentRollControllers)
                 {
-                    if (die != null && !die.IsSleeping())
-                    {
-                        allSettled = false;
-                        break;
-                    }
+                    if (die == null) continue;
+                    var rb = die.RigidBody;
+                    if (rb == null || rb.isKinematic) continue;
+
+                    float linSq = rb.linearVelocity.sqrMagnitude;
+                    float angSq = rb.angularVelocity.sqrMagnitude;
+
+                    if (!die.IsSleeping()) allSettled = false;
+                    if (linSq > earlyCorrectVelSq || angSq > earlyCorrectAngSq) allSlow = false;
                 }
 
-                if (allSettled && (Time.time - startTime > 0.4f))
+                // Start a long gentle rotation once die is slow enough (not yet fully stopped)
+                if (allSlow && !correctionStarted && Time.time - startTime > 0.3f)
                 {
+                    correctionStarted = true;
+
+                    for (int i = 0; i < currentRollControllers.Count; i++)
+                    {
+                        var die = currentRollControllers[i];
+                        if (die == null) continue;
+
+                        // Make kinematic so physics doesn't fight the tween
+                        if (die.RigidBody != null) die.RigidBody.isKinematic = true;
+
+                        int rollVal = die.GetUpwardValue();
+                        results.Add(rollVal);
+
+                        Vector3 targetMiddlePos = centerPos + (i - (currentRollControllers.Count - 1) * 0.5f) * new Vector3(1.0f, 0f, 0f);
+                        Quaternion targetRot = die.CalculateFacingRotation(rollVal, cameraDir);
+
+                        // Long, very gentle ease — starts imperceptibly slow
+                        die.transform.DOMove(targetMiddlePos, 1.2f, Ease.OutSine);
+                        die.transform.DORotateQuaternion(targetRot, 1.0f, Ease.OutSine);
+                    }
+
+                    // Don't wait for full settle — break early now that correction is running
                     break;
                 }
+
+                if (allSettled && Time.time - startTime > 0.4f)
+                    break;
 
                 await Task.Yield();
             }
 
-            // 3. Detect upward face value facing overlay camera (-Vector3.forward)
-            Vector3 cameraDir = -Vector3.forward;
 
-            for (int i = 0; i < currentRollControllers.Count; i++)
+            // If correction was not started yet (edge case: die settled instantly without slow phase)
+            if (!correctionStarted)
             {
-                var die = currentRollControllers[i];
-                if (die != null)
+                for (int i = 0; i < currentRollControllers.Count; i++)
                 {
+                    var die = currentRollControllers[i];
+                    if (die == null) continue;
+
                     if (die.RigidBody != null) die.RigidBody.isKinematic = true;
 
                     int rollVal = die.GetUpwardValue();
@@ -207,13 +246,12 @@ namespace BG3DiceSystem.Core.Services
                     Vector3 targetMiddlePos = centerPos + (i - (currentRollControllers.Count - 1) * 0.5f) * new Vector3(1.0f, 0f, 0f);
                     Quaternion targetRot = die.CalculateFacingRotation(rollVal, cameraDir);
 
-                    // Smoothly return die to middle spot with result face facing camera square & upright
-                    die.transform.DOMove(targetMiddlePos, 0.45f, Ease.OutQuad);
-                    die.transform.DORotateQuaternion(targetRot, 0.45f, Ease.OutQuad);
-
-                    OnDiceImpact?.Invoke(die.transform, 15f);
+                    die.transform.DOMove(targetMiddlePos, 0.8f, Ease.OutSine);
+                    die.transform.DORotateQuaternion(targetRot, 0.7f, Ease.OutSine);
                 }
             }
+
+
 
             _isRolling = false;
 

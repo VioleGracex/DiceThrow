@@ -13,6 +13,8 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
         OutQuad,
         InQuad,
         InOutQuad,
+        OutSine,
+        InSine,
         OutBack,
         InBack,
         OutBounce,
@@ -133,9 +135,11 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             t = Mathf.Clamp01(t);
             switch (ease)
             {
-                case Ease.OutQuad: return t * (2 - t);
-                case Ease.InQuad: return t * t;
+                case Ease.OutQuad:   return t * (2 - t);
+                case Ease.InQuad:    return t * t;
                 case Ease.InOutQuad: return t < 0.5f ? 2 * t * t : -1 + (4 - 2 * t) * t;
+                case Ease.OutSine:   return Mathf.Sin(t * Mathf.PI * 0.5f);
+                case Ease.InSine:    return 1f - Mathf.Cos(t * Mathf.PI * 0.5f);
                 case Ease.OutBack:
                     float c1 = 1.70158f;
                     float c3 = c1 + 1f;
