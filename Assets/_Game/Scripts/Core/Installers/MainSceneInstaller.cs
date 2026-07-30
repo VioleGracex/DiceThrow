@@ -63,6 +63,7 @@ namespace BG3DiceSystem.Core.Installers
             if (EffectsControllerRef != null) Container.BindInstance(EffectsControllerRef).AsSingle();
 
             // Bind Core Gameplay Services
+            Container.Bind<ILocalizationService>().To<LocalizationService>().AsSingle();
             Container.Bind<ISkillService>().To<SkillService>().AsSingle();
             Container.Bind<IDiceService>().To<DiceService>().AsSingle();
             Container.Bind<IEffectsService>().To<EffectsService>().AsSingle();

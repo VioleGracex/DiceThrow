@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 using BG3DiceSystem.Core.Utilities.Tweening;
+using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Gameplay.Skills;
 
 namespace BG3DiceSystem.UI
@@ -32,14 +33,15 @@ namespace BG3DiceSystem.UI
 
         private Vector3 _originalScale = Vector3.one;
 
-        public void Initialize(ModifierData data)
+        public void Initialize(ModifierData data, ILocalizationService localizationService = null)
         {
             Data = data;
             _originalScale = transform.localScale;
 
             if (NameText != null)
             {
-                NameText.text = string.IsNullOrEmpty(data.Name) ? "Modifier" : data.Name;
+                string rawName = string.IsNullOrEmpty(data.Name) ? "Modifier" : data.Name;
+                NameText.text = localizationService != null ? localizationService.GetModifierName(rawName) : rawName;
             }
 
             if (ValueText != null)

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Core.Utilities.Tweening;
 using BG3DiceSystem.Gameplay.Roll;
 
@@ -14,7 +15,26 @@ namespace BG3DiceSystem.UI
         public GameObject HistoryItemPrefab;
         public Button ClearHistoryButton;
 
+        private ILocalizationService _localizationService;
         private readonly List<GameObject> _spawnedItems = new List<GameObject>();
+
+        public void SetLocalizationService(ILocalizationService localizationService)
+        {
+            _localizationService = localizationService;
+            RefreshLocalization();
+        }
+
+        public void RefreshLocalization()
+        {
+            if (ClearHistoryButton != null)
+            {
+                var label = ClearHistoryButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null)
+                {
+                    label.text = _localizationService != null ? _localizationService.GetText("history_clear") : "Clear History";
+                }
+            }
+        }
 
         private void Awake()
         {
@@ -35,9 +55,14 @@ namespace BG3DiceSystem.UI
             if (label != null)
             {
                 string modSign = roll.Modifier >= 0 ? "+" : "";
-                string statusText = roll.IsSuccess ? "<color=#32CD32>SUCCESS</color>" : "<color=#FF4500>FAILURE</color>";
-                if (roll.IsCriticalSuccess) statusText = "<color=#FFD700>CRIT SUCCESS</color>";
-                if (roll.IsCriticalFailure) statusText = "<color=#FF0000>CRIT FAIL</color>";
+                string successStr = _localizationService != null ? _localizationService.GetText("history_success") : "SUCCESS";
+                string failStr = _localizationService != null ? _localizationService.GetText("history_failure") : "FAILURE";
+                string critSuccessStr = _localizationService != null ? _localizationService.GetText("history_crit_success") : "CRIT SUCCESS";
+                string critFailStr = _localizationService != null ? _localizationService.GetText("history_crit_failure") : "CRIT FAIL";
+
+                string statusText = roll.IsSuccess ? $"<color=#32CD32>{successStr}</color>" : $"<color=#FF4500>{failStr}</color>";
+                if (roll.IsCriticalSuccess) statusText = $"<color=#FFD700>{critSuccessStr}</color>";
+                if (roll.IsCriticalFailure) statusText = $"<color=#FF0000>{critFailStr}</color>";
 
                 label.text = $"{roll.SelectedDiceValue} {modSign}{roll.Modifier} = {roll.Total}  {statusText}";
             }

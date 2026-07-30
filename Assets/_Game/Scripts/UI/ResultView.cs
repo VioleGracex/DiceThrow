@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Core.Utilities.Tweening;
 using BG3DiceSystem.Gameplay.Roll;
 using BG3DiceSystem.Gameplay.Skills;
@@ -11,6 +12,12 @@ namespace BG3DiceSystem.UI
 {
     public class ResultView : MonoBehaviour
     {
+        private ILocalizationService _localizationService;
+
+        public void SetLocalizationService(ILocalizationService localizationService)
+        {
+            _localizationService = localizationService;
+        }
         [Header("Containers & Canvas")]
         public CanvasGroup ViewCanvasGroup;
 
@@ -113,8 +120,22 @@ namespace BG3DiceSystem.UI
             }
         }
 
+        private IReadOnlyList<ModifierData> _lastActiveModifiers;
+        private int _lastBaseModifier;
+
+        public void RefreshLocalization()
+        {
+            if (_lastActiveModifiers != null)
+            {
+                RefreshModifierCards(_lastActiveModifiers, _lastBaseModifier);
+            }
+        }
+
         public void RefreshModifierCards(IReadOnlyList<ModifierData> activeModifiers, int baseModifier)
         {
+            _lastActiveModifiers = activeModifiers;
+            _lastBaseModifier = baseModifier;
+
             EnsureModifierRowLayout();
 
             if (ResultCardsContainer == null && ModifierCardsRow != null)
@@ -193,6 +214,13 @@ namespace BG3DiceSystem.UI
                         CanvasGroup cg = cardObj.GetComponent<CanvasGroup>();
                         if (cg != null) cg.alpha = 1f;
                         cardObj.transform.localScale = Vector3.one;
+
+                        var labelTMP = cardObj.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
+                        if (labelTMP != null)
+                        {
+                            string rawTitle = string.IsNullOrEmpty(item.title) ? "BONUS" : item.title;
+                            labelTMP.text = _localizationService != null ? _localizationService.GetModifierName(rawTitle).ToUpper() : rawTitle.ToUpper();
+                        }
 
                         var valTMP = cardObj.transform.Find("Value")?.GetComponent<TextMeshProUGUI>();
                         if (valTMP != null)
@@ -382,9 +410,13 @@ namespace BG3DiceSystem.UI
 
             // 4. Reveal Final Outcome Status Badge
             Color badgeColor = GetBadgeColor(roll);
-            string badgeText = roll.IsCriticalSuccess ? "CRITICAL SUCCESS!" :
-                               (roll.IsCriticalFailure ? "CRITICAL FAILURE!" :
-                               (roll.IsSuccess ? "SUCCESS" : "FAILURE"));
+            string outcomeKey = roll.IsCriticalSuccess ? "outcome_crit_success" :
+                                (roll.IsCriticalFailure ? "outcome_crit_failure" :
+                                (roll.IsSuccess ? "outcome_success" : "outcome_failure"));
+            string fallbackBadgeText = roll.IsCriticalSuccess ? "CRITICAL SUCCESS!" :
+                                       (roll.IsCriticalFailure ? "CRITICAL FAILURE!" :
+                                       (roll.IsSuccess ? "SUCCESS" : "FAILURE"));
+            string badgeText = _localizationService != null ? _localizationService.GetText(outcomeKey) : fallbackBadgeText;
 
             if (StatusBadgeText != null)
             {
@@ -540,7 +572,8 @@ namespace BG3DiceSystem.UI
             hRect.offsetMin = new Vector2(4f, 0f);
             hRect.offsetMax = new Vector2(-4f, 0f);
             TextMeshProUGUI hTMP = headerObj.GetComponent<TextMeshProUGUI>();
-            hTMP.text = string.IsNullOrEmpty(title) ? "BONUS" : title.ToUpper();
+            string rawTitle = string.IsNullOrEmpty(title) ? "BONUS" : title;
+            hTMP.text = _localizationService != null ? _localizationService.GetModifierName(rawTitle).ToUpper() : rawTitle.ToUpper();
             hTMP.fontSize = 11;
             hTMP.fontStyle = FontStyles.Bold;
             hTMP.color = new Color(0.95f, 0.78f, 0.35f, 1f);
@@ -562,6 +595,16 @@ namespace BG3DiceSystem.UI
             vTMP.fontStyle = FontStyles.Bold;
             vTMP.color = Color.white;
             vTMP.alignment = TextAlignmentOptions.Center;
+
+#if UNITY_EDITOR
+            var roleModelTMP = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Game/Art/Fonts/RoleModel_TMP.asset");
+            if (roleModelTMP != null)
+            {
+                hTMP.font = roleModelTMP;
+                vTMP.font = roleModelTMP;
+            }
+#endif
+
             return cardObj;
         }
 

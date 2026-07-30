@@ -9,7 +9,7 @@ namespace BG3DiceSystem.Core.Services
 {
     public class SkillService : ISkillService
     {
-        public const int MAX_MODIFIER_CARDS = 5;
+        public const int MAX_MODIFIER_CARDS = 999;
 
         public event Action OnSkillChanged;
         public event Action OnModifierChanged;
@@ -25,7 +25,7 @@ namespace BG3DiceSystem.Core.Services
         public int BaseModifier => _baseModifier;
         public DiceType CurrentDiceType => _currentDiceType;
         public IReadOnlyList<ModifierData> ActiveModifiers => _activeModifiers;
-        public int MaxModifierCards => MAX_MODIFIER_CARDS;
+        public int MaxModifierCards => int.MaxValue;
 
         public int CurrentModifier
         {
@@ -103,15 +103,9 @@ namespace BG3DiceSystem.Core.Services
 
         public bool AddModifier(string name, int value)
         {
-            if (_activeModifiers.Count >= MAX_MODIFIER_CARDS)
-            {
-                Debug.LogWarning($"[SkillService] Cannot add modifier '{name}'. Limit of {MAX_MODIFIER_CARDS} cards reached.");
-                return false;
-            }
-
             var mod = new ModifierData(name, value, true);
             _activeModifiers.Add(mod);
-            Debug.Log($"[SkillService] Added modifier '{name}' ({value}). Total active cards: {_activeModifiers.Count}/{MAX_MODIFIER_CARDS}");
+            Debug.Log($"[SkillService] Added modifier '{name}' ({value}). Total active cards: {_activeModifiers.Count}");
             OnModifierChanged?.Invoke();
             return true;
         }

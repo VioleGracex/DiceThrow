@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Core.Utilities.Tweening;
 using BG3DiceSystem.Gameplay.Dice;
 using BG3DiceSystem.Gameplay.Roll;
@@ -12,6 +13,7 @@ namespace BG3DiceSystem.UI
 {
     public class SkillCheckView : MonoBehaviour
     {
+        private ILocalizationService _localizationService;
         #region Events
         public event Action<int> OnSkillSelected;
         public event Action<int> OnModifierAdjusted;
@@ -228,11 +230,89 @@ namespace BG3DiceSystem.UI
         #endregion
 
         #region Public API
+        private IReadOnlyList<ModifierData> _lastActiveModifiers;
+        private int _lastMaxLimit = 5;
+
+        public void SetLocalizationService(ILocalizationService localizationService)
+        {
+            _localizationService = localizationService;
+            RefreshLocalization();
+        }
+
+        public void RefreshLocalization()
+        {
+            if (TopDCHeaderLabelText != null)
+            {
+                TopDCHeaderLabelText.text = _localizationService != null ? _localizationService.GetText("dc_banner_header") : "DIFFICULTY CLASS";
+            }
+            if (RollButton != null)
+            {
+                var label = RollButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("roll_button") : "ROLL";
+            }
+            if (PresetGuidanceButton != null)
+            {
+                var label = PresetGuidanceButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("preset_guidance") : "Guidance (+2)";
+            }
+            if (PresetProficiencyButton != null)
+            {
+                var label = PresetProficiencyButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("preset_proficiency") : "Proficiency (+2)";
+            }
+            if (PresetPlusOneButton != null)
+            {
+                var label = PresetPlusOneButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("preset_plus_one") : "Bonus (+1)";
+            }
+            if (AddModifierButton != null)
+            {
+                var label = AddModifierButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("add_modifier") : "+ Add Modifier";
+            }
+            if (HistoryTabButton != null)
+            {
+                var label = HistoryTabButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("tab_history") : "History";
+            }
+            if (AutoTestButton != null)
+            {
+                var label = AutoTestButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("tab_autotests") : "Auto Tests";
+            }
+
+            // Static panel titles if present
+            if (LeftPanelRect != null)
+            {
+                var titleText = LeftPanelRect.Find("TitleText")?.GetComponent<TextMeshProUGUI>();
+                if (titleText != null) titleText.text = _localizationService != null ? _localizationService.GetText("extra_settings_title") : "Extra Settings";
+            }
+            if (RightPanelRect != null)
+            {
+                var titleText = RightPanelRect.Find("TitleText")?.GetComponent<TextMeshProUGUI>();
+                if (titleText != null) titleText.text = _localizationService != null ? _localizationService.GetText("current_ability_check_title") : "Current Ability Check";
+                var headerText = RightPanelRect.Find("SelectedSkillHeader")?.GetComponent<TextMeshProUGUI>();
+                if (headerText != null) headerText.text = _localizationService != null ? _localizationService.GetText("selected_skill_header") : "Selected Skill";
+            }
+
+            UpdateToggleVisuals();
+
+            if (_lastActiveModifiers != null)
+            {
+                RenderModifierCards(_lastActiveModifiers, _lastMaxLimit);
+            }
+        }
+
         public void PopulateSkills(List<string> skillNames)
         {
             if (SkillDropdown == null) return;
             SkillDropdown.ClearOptions();
-            SkillDropdown.AddOptions(skillNames);
+            List<string> localizedNames = new List<string>();
+            foreach (var s in skillNames)
+            {
+                localizedNames.Add(_localizationService != null ? _localizationService.GetSkillName(s) : s);
+            }
+            SkillDropdown.AddOptions(localizedNames);
         }
 
         public void UpdateSkillDisplay(string skillName, int dc, string description)
@@ -241,11 +321,20 @@ namespace BG3DiceSystem.UI
             {
                 DCText.transform.DOKill();
                 DCText.transform.localScale = Vector3.one;
-                DCText.text = "Difficulty Class (DC " + dc.ToString() + ")";
+                DCText.text = _localizationService != null ? _localizationService.GetText("dc_class_fmt", dc) : ("Difficulty Class (DC " + dc.ToString() + ")");
             }
-            if (SelectedSkillNameText != null) SelectedSkillNameText.text = skillName;
-            if (SkillDescriptionText != null) SkillDescriptionText.text = description;
-            if (TargetInfoText != null) TargetInfoText.text = $"Target DC: {dc}";
+            string localizedName = _localizationService != null ? _localizationService.GetSkillName(skillName) : skillName;
+            string localizedDesc = _localizationService != null ? _localizationService.GetSkillDescription(skillName) : description;
+            if (string.IsNullOrEmpty(localizedDesc)) localizedDesc = description;
+
+            if (SelectedSkillNameText != null) SelectedSkillNameText.text = localizedName;
+            if (SkillDescriptionText != null) SkillDescriptionText.text = localizedDesc;
+            if (TargetInfoText != null) TargetInfoText.text = _localizationService != null ? _localizationService.GetText("target_dc_fmt", dc) : $"Target DC: {dc}";
+
+            if (TopDCHeaderLabelText != null)
+            {
+                TopDCHeaderLabelText.text = _localizationService != null ? _localizationService.GetText("dc_banner_header") : "DIFFICULTY CLASS";
+            }
 
             if (TopDCNumberValueText != null)
             {
@@ -261,7 +350,8 @@ namespace BG3DiceSystem.UI
             {
                 ModifierText.transform.DOKill();
                 ModifierText.transform.localScale = Vector3.one;
-                string modString = modifier == 0 ? "Bonus (0)" : "Bonus (" + (modifier > 0 ? "+" : "") + modifier.ToString() + ")";
+                string modVal = (modifier > 0 ? "+" : "") + modifier;
+                string modString = _localizationService != null ? _localizationService.GetText("bonus_fmt", modVal) : ("Bonus (" + modVal + ")");
                 ModifierText.text = modString;
             }
         }
@@ -269,21 +359,23 @@ namespace BG3DiceSystem.UI
         #region Modifier Cards List & Limit Handling
         public void RenderModifierCards(IReadOnlyList<ModifierData> activeModifiers, int maxLimit = 5)
         {
+            _lastActiveModifiers = activeModifiers;
+            _lastMaxLimit = maxLimit;
+
             int currentCount = activeModifiers != null ? activeModifiers.Count : 0;
 
             if (ModifierCountText != null)
             {
-                ModifierCountText.text = $"Modifiers ({currentCount}/{maxLimit})";
-                ModifierCountText.color = currentCount >= maxLimit 
-                    ? new Color(0.95f, 0.78f, 0.35f, 1f) 
-                    : new Color(0.8f, 0.8f, 0.85f, 1f);
+                ModifierCountText.text = _localizationService != null 
+                    ? _localizationService.GetText("modifiers_list_fmt", currentCount) 
+                    : $"Modifiers ({currentCount})";
+                ModifierCountText.color = new Color(0.95f, 0.78f, 0.35f, 1f);
             }
 
-            bool canAdd = currentCount < maxLimit;
-            if (AddModifierButton != null) AddModifierButton.interactable = canAdd;
-            if (PresetGuidanceButton != null) PresetGuidanceButton.interactable = canAdd;
-            if (PresetProficiencyButton != null) PresetProficiencyButton.interactable = canAdd;
-            if (PresetPlusOneButton != null) PresetPlusOneButton.interactable = canAdd;
+            if (AddModifierButton != null) AddModifierButton.interactable = true;
+            if (PresetGuidanceButton != null) PresetGuidanceButton.interactable = true;
+            if (PresetProficiencyButton != null) PresetProficiencyButton.interactable = true;
+            if (PresetPlusOneButton != null) PresetPlusOneButton.interactable = true;
 
             if (ModifierCardsContainer == null) return;
 
@@ -311,7 +403,7 @@ namespace BG3DiceSystem.UI
 
                 if (cardInstance != null)
                 {
-                    cardInstance.Initialize(mod);
+                    cardInstance.Initialize(mod, _localizationService);
                     cardInstance.OnAdjustValueRequested += (data, delta) =>
                     {
                         OnAdjustModifierValueRequested?.Invoke(data.Id, delta);
@@ -428,6 +520,18 @@ namespace BG3DiceSystem.UI
             xRect.anchorMin = Vector2.zero; xRect.anchorMax = Vector2.one; xRect.offsetMin = Vector2.zero; xRect.offsetMax = Vector2.zero;
             TextMeshProUGUI xTMP = xTextObj.GetComponent<TextMeshProUGUI>();
             xTMP.text = "X"; xTMP.fontSize = 13; xTMP.color = Color.white; xTMP.alignment = TextAlignmentOptions.Center;
+
+#if UNITY_EDITOR
+            var roleModelTMP = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Game/Art/Fonts/RoleModel_TMP.asset");
+            if (roleModelTMP != null)
+            {
+                nameTMP.font = roleModelTMP;
+                valTMP.font = roleModelTMP;
+                mTMP.font = roleModelTMP;
+                pTMP.font = roleModelTMP;
+                xTMP.font = roleModelTMP;
+            }
+#endif
 
             ModifierCardUI cardUI = cardObj.GetComponent<ModifierCardUI>();
             cardUI.NameText = nameTMP;
@@ -690,6 +794,7 @@ namespace BG3DiceSystem.UI
                 if (label != null)
                 {
                     label.color = isNormal ? Color.white : new Color(0.7f, 0.7f, 0.75f, 1f);
+                    label.text = _localizationService != null ? _localizationService.GetText("mode_single_die") : "Single Die";
                 }
             }
             if (AdvantageToggle != null)
@@ -704,6 +809,7 @@ namespace BG3DiceSystem.UI
                 if (label != null)
                 {
                     label.color = isAdv ? Color.white : new Color(0.7f, 0.7f, 0.75f, 1f);
+                    label.text = _localizationService != null ? _localizationService.GetText("mode_advantage") : "Advantage";
                 }
             }
         }

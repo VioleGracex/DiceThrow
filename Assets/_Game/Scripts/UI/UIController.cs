@@ -21,6 +21,7 @@ namespace BG3DiceSystem.UI
         public SkillCheckView SkillCheckView;
         public ResultView ResultView;
         public HistoryView HistoryView;
+        public LanguageSelectorUI LanguageSelectorView;
 
         [Header("Automated Test Suite References")]
         public AutoPlayTestView AutoPlayTestView;
@@ -32,6 +33,7 @@ namespace BG3DiceSystem.UI
         private IDiceService _diceService;
         private IRollService _rollService;
         private IAudioService _audioService;
+        private ILocalizationService _localizationService;
         private bool _isInitialized;
         #endregion
 
@@ -41,12 +43,14 @@ namespace BG3DiceSystem.UI
             ISkillService skillService,
             IDiceService diceService,
             IRollService rollService,
-            IAudioService audioService)
+            IAudioService audioService,
+            ILocalizationService localizationService)
         {
             _skillService = skillService;
             _diceService = diceService;
             _rollService = rollService;
             _audioService = audioService;
+            _localizationService = localizationService;
         }
         #endregion
 
@@ -81,10 +85,37 @@ namespace BG3DiceSystem.UI
 
             Debug.Log("[UIController] Starting Master Initialization Sequence...");
 
-            // 1. Initialize Sub-views
+            // 1. Initialize Sub-views & Localization
             if (SkillCheckView != null)
             {
+                SkillCheckView.SetLocalizationService(_localizationService);
                 SkillCheckView.InitializeView();
+            }
+
+            if (ResultView != null)
+            {
+                ResultView.SetLocalizationService(_localizationService);
+            }
+
+            if (HistoryView != null)
+            {
+                HistoryView.SetLocalizationService(_localizationService);
+            }
+
+            if (LanguageSelectorView == null)
+            {
+                LanguageSelectorView = GetComponentInChildren<LanguageSelectorUI>(true);
+                if (LanguageSelectorView == null)
+                {
+                    GameObject langObj = new GameObject("LanguageSelectorUI");
+                    langObj.transform.SetParent(transform, false);
+                    LanguageSelectorView = langObj.AddComponent<LanguageSelectorUI>();
+                }
+            }
+
+            if (LanguageSelectorView != null)
+            {
+                LanguageSelectorView.Initialize(_localizationService, _audioService);
             }
 
             if (AutoPlayTestRunner == null)
@@ -103,6 +134,7 @@ namespace BG3DiceSystem.UI
 
             if (AutoPlayTestView != null)
             {
+                AutoPlayTestView.SetLocalizationService(_localizationService);
                 AutoPlayTestView.InitializeView();
             }
 
@@ -188,10 +220,20 @@ namespace BG3DiceSystem.UI
             {
                 _diceService.OnRollRequested += HandleRollClicked;
             }
+
+            if (_localizationService != null)
+            {
+                _localizationService.OnLanguageChanged += HandleLanguageChanged;
+            }
         }
 
         private void UnsubscribeEvents()
         {
+            if (_localizationService != null)
+            {
+                _localizationService.OnLanguageChanged -= HandleLanguageChanged;
+            }
+
             if (_diceService != null)
             {
                 _diceService.OnRollRequested -= HandleRollClicked;
@@ -341,6 +383,15 @@ namespace BG3DiceSystem.UI
             {
                 ResultView.RefreshModifierCards(_skillService.ActiveModifiers, _skillService.BaseModifier);
             }
+        }
+
+        private void HandleLanguageChanged()
+        {
+            InitializeSkillView();
+            SkillCheckView?.RefreshLocalization();
+            ResultView?.RefreshLocalization();
+            HistoryView?.RefreshLocalization();
+            AutoPlayTestView?.RefreshLocalization();
         }
         #endregion
 

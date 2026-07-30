@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Core.Utilities.Tweening;
 using BG3DiceSystem.Gameplay.Dice;
 using BG3DiceSystem.Gameplay.Roll;
@@ -50,9 +51,42 @@ namespace BG3DiceSystem.UI
         #endregion
 
         #region Private Fields
+        private ILocalizationService _localizationService;
         private readonly List<GameObject> _spawnedItemRows = new List<GameObject>();
         private bool _isInitialized;
         #endregion
+
+        public void SetLocalizationService(ILocalizationService localizationService)
+        {
+            _localizationService = localizationService;
+            RefreshLocalization();
+        }
+
+        public void RefreshLocalization()
+        {
+            if (TitleText != null) TitleText.text = _localizationService != null ? _localizationService.GetText("autotest_title") : "AUTOMATED TEST SUITE";
+            if (StartTestsButton != null)
+            {
+                var label = StartTestsButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("autotest_run") : "Run Tests";
+            }
+            if (StopTestsButton != null)
+            {
+                var label = StopTestsButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("autotest_stop") : "Stop";
+            }
+            if (CloseViewButton != null)
+            {
+                var label = CloseViewButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("autotest_close") : "Close";
+            }
+            if (CopyMarkdownButton != null)
+            {
+                var label = CopyMarkdownButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (label != null) label.text = _localizationService != null ? _localizationService.GetText("autotest_copy") : "Copy Report";
+            }
+            if (WaitTimeSlider != null) UpdateWaitTimeLabel(WaitTimeSlider.value);
+        }
 
         #region Initialization & Setup
         public void InitializeView()
@@ -116,7 +150,7 @@ namespace BG3DiceSystem.UI
         {
             if (WaitTimeLabelText != null)
             {
-                WaitTimeLabelText.text = $"Delay: {seconds:F1}s";
+                WaitTimeLabelText.text = _localizationService != null ? _localizationService.GetText("autotest_delay_fmt", seconds) : $"Delay: {seconds:F1}s";
             }
         }
         #endregion
@@ -167,7 +201,7 @@ namespace BG3DiceSystem.UI
                 ClearChecklistRows();
                 if (SummaryBannerContainer != null) SummaryBannerContainer.SetActive(false);
                 if (ProgressBarSlider != null) ProgressBarSlider.value = 0f;
-                if (ProgressStatusText != null) ProgressStatusText.text = "Initializing Automated Test Suite...";
+                if (ProgressStatusText != null) ProgressStatusText.text = _localizationService != null ? _localizationService.GetText("autotest_initializing") : "Initializing Automated Test Suite...";
                 if (ProgressPercentText != null) ProgressPercentText.text = "0%";
             }
         }
@@ -181,7 +215,7 @@ namespace BG3DiceSystem.UI
             if (ProgressStatusText != null && stepResult != null)
             {
                 string statusSymbol = stepResult.IsPassed ? "✅" : "❌";
-                ProgressStatusText.text = $"Running [{currentStep}/{totalSteps}]: {stepResult.TestName} ({statusSymbol})";
+                ProgressStatusText.text = _localizationService != null ? _localizationService.GetText("autotest_running_fmt", currentStep, totalSteps, stepResult.TestName, statusSymbol) : $"Running [{currentStep}/{totalSteps}]: {stepResult.TestName} ({statusSymbol})";
             }
 
             AddChecklistRow(stepResult);
@@ -195,7 +229,7 @@ namespace BG3DiceSystem.UI
 
             if (SummaryStatsText != null)
             {
-                SummaryStatsText.text = $"Total: {report.TotalTests} | Passed: {report.PassedCount} | Failed: {report.FailedCount} | Duration: {report.TotalDurationSeconds:F1}s";
+                SummaryStatsText.text = _localizationService != null ? _localizationService.GetText("autotest_summary_fmt", report.TotalTests, report.PassedCount, report.FailedCount, report.TotalDurationSeconds) : $"Total: {report.TotalTests} | Passed: {report.PassedCount} | Failed: {report.FailedCount} | Duration: {report.TotalDurationSeconds:F1}s";
             }
 
             if (PassRatePercentText != null)
@@ -266,7 +300,9 @@ namespace BG3DiceSystem.UI
             RectTransform blRect = bLabelObj.GetComponent<RectTransform>();
             blRect.anchorMin = Vector2.zero; blRect.anchorMax = Vector2.one; blRect.offsetMin = Vector2.zero; blRect.offsetMax = Vector2.zero;
             TextMeshProUGUI blTMP = bLabelObj.GetComponent<TextMeshProUGUI>();
-            blTMP.text = result.IsPassed ? "PASS ✓" : "FAIL ✗";
+            string passStr = _localizationService != null ? _localizationService.GetText("autotest_pass") : "PASS ✓";
+            string failStr = _localizationService != null ? _localizationService.GetText("autotest_fail") : "FAIL ✗";
+            blTMP.text = result.IsPassed ? passStr : failStr;
             blTMP.fontSize = 13;
             blTMP.fontStyle = FontStyles.Bold;
             blTMP.color = Color.white;
