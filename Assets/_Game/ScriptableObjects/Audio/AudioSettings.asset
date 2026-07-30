@@ -12,11 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30d0e5f0f891a3a4ea8c9d23cbbaaec5, type: 3}
   m_Name: AudioSettings
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.Audio.AudioSettingsSO
-  ButtonClick: {fileID: 0}
-  DiceThrow: {fileID: 0}
-  DiceBounce: {fileID: 0}
-  HeavyLanding: {fileID: 0}
-  Success: {fileID: 0}
-  Failure: {fileID: 0}
-  CriticalSuccess: {fileID: 0}
-  CriticalFailure: {fileID: 0}
+  ButtonClick: {fileID: 8300000, guid: 55159f3d5b13b19419d2b3b931a6b342, type: 3}
+  DiceBtnClick: {fileID: 8300000, guid: f144ee7f5a4e6904b8b7cc68c53aae62, type: 3}
+  ScrollOpen: {fileID: 8300000, guid: 34ac72bd40feaeb42b4e028b50b9c85f, type: 3}
+  ChevronToggle: {fileID: 8300000, guid: 53de578f458bb864fa8b84dd87176620, type: 3}
+  CardSlide: {fileID: 8300000, guid: 331142a3de958654bb23507343214c74, type: 3}
+  BonusChime: {fileID: 8300000, guid: 963ff6ad67f9ec74aaa28d06fc7bfd43, type: 3}
+  DiceThrow: {fileID: 8300000, guid: aff67fb154fbf174b8c5ea4ff38a8fd4, type: 3}
+  DiceBounce: {fileID: 8300000, guid: b6e9fe163352935468233a8d17b30044, type: 3}
+  HeavyLanding: {fileID: 8300000, guid: 9cc384a69808dd4439ca1d5a1b3db4b3, type: 3}
+  DicePickup: {fileID: 8300000, guid: 4cb45c609b8acb247a1a64c9a5899f46, type: 3}
+  Success: {fileID: 8300000, guid: 3d34ca160b595b0439f50293de6b7b94, type: 3}
+  Failure: {fileID: 8300000, guid: 9698e0cb684c26a4aaceec6f22de619a, type: 3}
+  CriticalSuccess: {fileID: 8300000, guid: 3d34ca160b595b0439f50293de6b7b94, type: 3}
+  CriticalFailure: {fileID: 8300000, guid: eb8649676f1fbad4c89cdf05e8f21097, type: 3}

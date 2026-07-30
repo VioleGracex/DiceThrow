@@ -28,13 +28,22 @@ namespace BG3DiceSystem.Core.Services
         private bool _isRolling;
         #endregion
 
+        private float _lastDiceClickTime = -999f;
+        private const float DiceClickCooldownSeconds = 5.0f;
+
         private void HandleDiceClicked()
         {
-            if (!_isRolling)
+            if (_isRolling) return;
+
+            if (Time.time - _lastDiceClickTime < DiceClickCooldownSeconds)
             {
-                Debug.Log("[DiceService] 3D Dice clicked by mouse! Requesting roll execution...");
-                OnRollRequested?.Invoke();
+                Debug.Log($"[DiceService] Dice click ignored: Cooldown active ({DiceClickCooldownSeconds - (Time.time - _lastDiceClickTime):F1}s remaining).");
+                return;
             }
+
+            _lastDiceClickTime = Time.time;
+            Debug.Log("[DiceService] 3D Dice clicked by mouse! Requesting roll execution...");
+            OnRollRequested?.Invoke();
         }
 
         #region Properties
@@ -65,8 +74,7 @@ namespace BG3DiceSystem.Core.Services
         #region Preview Dice Operations
         public void SpawnPreviewDice(DiceType type, RollMode mode = RollMode.SingleDie)
         {
-            if (_isRolling) return;
-
+            _isRolling = false;
             _currentDiceType = type;
             _currentRollMode = mode;
 
@@ -138,6 +146,8 @@ namespace BG3DiceSystem.Core.Services
                 newDie.transform.rotation = controller.CalculateFacingRotation(1, -Vector3.forward);
                 controller.OnDiceClicked -= HandleDiceClicked;
                 controller.OnDiceClicked += HandleDiceClicked;
+                controller.OnDiceSwiped -= HandleDiceClicked;
+                controller.OnDiceSwiped += HandleDiceClicked;
             }
 
             return newDie;
@@ -234,14 +244,14 @@ namespace BG3DiceSystem.Core.Services
                     if (linSq > earlyCorrectVelSq || angSq > earlyCorrectAngSq) allSlow = false;
                 }
 
-                if (allSlow && !correctionStarted && Time.time - startTime > 0.3f)
+                if (allSlow && !correctionStarted && Time.time - startTime > 0.5f)
                 {
                     correctionStarted = true;
                     ProcessDiceSettling(currentRollControllers, mode, centerPos, cameraDir, results);
                     break;
                 }
 
-                if (allSettled && Time.time - startTime > 0.4f)
+                if (allSettled && Time.time - startTime > 0.5f)
                     break;
 
                 await Task.Delay(20);
@@ -252,9 +262,12 @@ namespace BG3DiceSystem.Core.Services
                 ProcessDiceSettling(currentRollControllers, mode, centerPos, cameraDir, results);
             }
 
+            // Wait until 3D dice settling rotation/move animation completes before displaying results
+            await Task.Delay(350);
+
             _isRolling = false;
 
-            _ = RespawnPreviewAfterDelay(2.5f);
+            _ = RespawnPreviewAfterDelay(3.5f);
 
             return results;
         }

@@ -36,6 +36,7 @@ namespace BG3DiceSystem.Core.Services
             { "target_info_header", ("Target Information", "Информация о цели") },
             { "dice_result_label", ("Dice Result", "Результат кубика") },
             { "roll_button", ("ROLL", "БРОСОК") },
+            { "quit_button", ("QUIT", "ВЫХОД") },
 
             // Modifiers & Presets
             { "add_modifier", ("+ Add Modifier", "+ Добавить бонус") },

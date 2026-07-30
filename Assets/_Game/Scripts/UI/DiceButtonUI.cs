@@ -19,6 +19,11 @@ namespace BG3DiceSystem.UI
         public DiceType DiceType;
         public Image BackgroundImage;
         public TextMeshProUGUI LabelText;
+
+        [Header("State Sprites & Icon")]
+        public Image IconImage;
+        public Sprite NormalIconSprite;
+        public Sprite SelectedIconSprite;
         #endregion
 
         #region Private Fields
@@ -42,7 +47,13 @@ namespace BG3DiceSystem.UI
         }
         #endregion
 
-        #region Public Selection API
+        #region Public Selection & Interaction API
+        public void SetInteractable(bool interactable)
+        {
+            Button btn = GetComponent<Button>();
+            if (btn != null) btn.interactable = interactable;
+        }
+
         public void SetSelected(bool isSelected)
         {
             _isSelected = isSelected;
@@ -62,7 +73,7 @@ namespace BG3DiceSystem.UI
                 }
                 if (BackgroundImage != null)
                 {
-                    BackgroundImage.color = new Color(0.28f, 0.28f, 0.35f, 0.95f);
+                    BackgroundImage.color = (BackgroundImage.sprite != null) ? new Color(1f, 1f, 1f, 1f) : new Color(0.28f, 0.28f, 0.35f, 0.95f);
                 }
             }
         }
@@ -86,6 +97,25 @@ namespace BG3DiceSystem.UI
         #region Visual State Animation
         private void AnimateState()
         {
+            if (IconImage != null)
+            {
+                if (_isSelected && SelectedIconSprite != null)
+                {
+                    IconImage.sprite = SelectedIconSprite;
+                }
+                else if (!_isSelected && NormalIconSprite != null)
+                {
+                    IconImage.sprite = NormalIconSprite;
+                }
+                IconImage.color = Color.white;
+                IconImage.gameObject.SetActive(true);
+            }
+
+            if (LabelText != null)
+            {
+                LabelText.gameObject.SetActive(true);
+            }
+
             if (_isSelected)
             {
                 if (Application.isPlaying)
@@ -98,11 +128,11 @@ namespace BG3DiceSystem.UI
                 }
                 if (BackgroundImage != null)
                 {
-                    BackgroundImage.color = new Color(0.95f, 0.8f, 0.35f, 1f);
+                    BackgroundImage.color = Color.white;
                 }
                 if (LabelText != null)
                 {
-                    LabelText.color = new Color(0.12f, 0.1f, 0.05f, 1f);
+                    LabelText.color = new Color(1f, 0.92f, 0.5f, 1f);
                 }
             }
             else
@@ -117,11 +147,11 @@ namespace BG3DiceSystem.UI
                 }
                 if (BackgroundImage != null)
                 {
-                    BackgroundImage.color = new Color(0.18f, 0.18f, 0.22f, 0.85f);
+                    BackgroundImage.color = new Color(0.85f, 0.85f, 0.85f, 1f);
                 }
                 if (LabelText != null)
                 {
-                    LabelText.color = Color.white;
+                    LabelText.color = new Color(0.95f, 0.95f, 0.95f, 1f);
                 }
             }
         }

@@ -63,7 +63,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 16, y: 16, z: 16}
+  m_LocalScale: {x: 20, y: 20, z: 20}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 7662075797842799499}
@@ -221,7 +221,7 @@ MonoBehaviour:
   RigidBody: {fileID: 6662789523457895317}
   ResultDetector: {fileID: 2255285864641757755}
   RollCenter: {x: 1000, y: 1000, z: 0}
-  RollZoneRadius: 1
+  RollZoneRadius: 0.5
 --- !u!1 &1892184669763786183
 GameObject:
   m_ObjectHideFlags: 0

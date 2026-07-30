@@ -48,12 +48,17 @@ namespace BG3DiceSystem.Core.Services
 
         public async Task<FinalRoll> ExecuteRollAsync()
         {
-            if (IsRolling) return default;
+            if (IsRolling || (_diceService != null && _diceService.IsRolling)) return default;
 
             OnRollStarted?.Invoke();
             _audioService?.PlayDiceThrow();
 
             List<int> diceValues = await _diceService.RollDiceAsync(CurrentRollMode);
+            if (diceValues == null || diceValues.Count == 0)
+            {
+                Debug.LogWarning("[RollService] Roll execution aborted: dice roll returned empty result.");
+                return default;
+            }
 
             _audioService?.PlayHeavyLanding();
             _effectsService?.TriggerCameraShake(0.3f);
@@ -111,31 +116,7 @@ namespace BG3DiceSystem.Core.Services
 
             _history.Insert(0, roll);
 
-            // Handle FX & SFX
-            Vector3 overlayPos = new Vector3(1000f, 1000f, 0f);
-            if (isNatMax)
-            {
-                _audioService?.PlayCriticalSuccess();
-                _effectsService?.PlayCriticalSuccessExplosion(overlayPos);
-            }
-            else if (isNat1)
-            {
-                _audioService?.PlayCriticalFailure();
-                _effectsService?.PlayFailureFlash();
-            }
-            else if (isSuccess)
-            {
-                _audioService?.PlaySuccess();
-                _effectsService?.PlaySuccessGlow();
-            }
-            else
-            {
-                _audioService?.PlayFailure();
-                _effectsService?.PlayFailureFlash();
-            }
-
-            await Task.Delay(400);
-
+            // Outcome FX & SFX are handled by ResultView after modifier addition animations finish.
             OnRollCompleted?.Invoke(roll);
             return roll;
         }

@@ -145,54 +145,53 @@ namespace BG3DiceSystem.Editor
             if (uiController.SkillCheckView != null)
             {
                 var scv = uiController.SkillCheckView;
-                if (scv.SelectedSkillNameText != null) { scv.SelectedSkillNameText.font = roleModelTMP; EditorUtility.SetDirty(scv.SelectedSkillNameText); rCount++; }
-                if (scv.SkillDescriptionText != null) { scv.SkillDescriptionText.font = roleModelTMP; EditorUtility.SetDirty(scv.SkillDescriptionText); rCount++; }
-                if (scv.TargetInfoText != null) { scv.TargetInfoText.font = roleModelTMP; EditorUtility.SetDirty(scv.TargetInfoText); rCount++; }
-                if (scv.ModifierText != null) { scv.ModifierText.font = roleModelTMP; EditorUtility.SetDirty(scv.ModifierText); rCount++; }
-                if (scv.ModifierCountText != null) { scv.ModifierCountText.font = roleModelTMP; EditorUtility.SetDirty(scv.ModifierCountText); rCount++; }
-                if (scv.DCText != null) { scv.DCText.font = roleModelTMP; EditorUtility.SetDirty(scv.DCText); rCount++; }
+                if (scv.SelectedSkillNameText != null) { scv.SelectedSkillNameText.font = cardivalTMP; EditorUtility.SetDirty(scv.SelectedSkillNameText); rCount++; }
+                if (scv.SkillDescriptionText != null) { scv.SkillDescriptionText.font = cardivalTMP; EditorUtility.SetDirty(scv.SkillDescriptionText); rCount++; }
+                if (scv.TargetInfoText != null) { scv.TargetInfoText.font = cardivalTMP; EditorUtility.SetDirty(scv.TargetInfoText); rCount++; }
+                if (scv.ModifierText != null) { scv.ModifierText.font = cardivalTMP; EditorUtility.SetDirty(scv.ModifierText); rCount++; }
+                if (scv.ModifierCountText != null) { scv.ModifierCountText.font = cardivalTMP; EditorUtility.SetDirty(scv.ModifierCountText); rCount++; }
+                if (scv.DCText != null) { scv.DCText.font = cardivalTMP; EditorUtility.SetDirty(scv.DCText); rCount++; }
 
                 if (scv.RightPanelRect != null)
                 {
                     var h = scv.RightPanelRect.Find("SelectedSkillHeader")?.GetComponent<TextMeshProUGUI>();
-                    if (h != null) { h.font = roleModelTMP; EditorUtility.SetDirty(h); rCount++; }
+                    if (h != null) { h.font = cardivalTMP; EditorUtility.SetDirty(h); rCount++; }
                 }
 
-                if (scv.SingleDieToggle != null) { var t = scv.SingleDieToggle.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.AdvantageToggle != null) { var t = scv.AdvantageToggle.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
+                if (scv.SingleDieToggle != null) { var t = scv.SingleDieToggle.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.AdvantageToggle != null) { var t = scv.AdvantageToggle.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
 
-                if (scv.PresetGuidanceButton != null) { var t = scv.PresetGuidanceButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.PresetProficiencyButton != null) { var t = scv.PresetProficiencyButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.PresetPlusOneButton != null) { var t = scv.PresetPlusOneButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.AddModifierButton != null) { var t = scv.AddModifierButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.HistoryTabButton != null) { var t = scv.HistoryTabButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
-                if (scv.AutoTestButton != null) { var t = scv.AutoTestButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = roleModelTMP; EditorUtility.SetDirty(t); } }
+                if (scv.PresetGuidanceButton != null) { var t = scv.PresetGuidanceButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.PresetProficiencyButton != null) { var t = scv.PresetProficiencyButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.PresetPlusOneButton != null) { var t = scv.PresetPlusOneButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.AddModifierButton != null) { var t = scv.AddModifierButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.HistoryTabButton != null) { var t = scv.HistoryTabButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
+                if (scv.AutoTestButton != null) { var t = scv.AutoTestButton.GetComponentInChildren<TextMeshProUGUI>(); if (t != null) { t.font = cardivalTMP; EditorUtility.SetDirty(t); } }
 
                 foreach (var b in scv.DiceButtons)
                 {
-                    if (b != null && b.LabelText != null) { b.LabelText.font = roleModelTMP; EditorUtility.SetDirty(b.LabelText); }
+                    if (b != null && b.LabelText != null) { b.LabelText.font = cardivalTMP; EditorUtility.SetDirty(b.LabelText); }
                 }
             }
 
             if (uiController.LanguageSelectorView != null)
             {
                 var lsv = uiController.LanguageSelectorView;
-                if (lsv.EnText != null) { lsv.EnText.font = roleModelTMP; EditorUtility.SetDirty(lsv.EnText); rCount++; }
-                if (lsv.RuText != null) { lsv.RuText.font = roleModelTMP; EditorUtility.SetDirty(lsv.RuText); rCount++; }
+                if (lsv.EnText != null) { lsv.EnText.font = cardivalTMP; EditorUtility.SetDirty(lsv.EnText); rCount++; }
+                if (lsv.RuText != null) { lsv.RuText.font = cardivalTMP; EditorUtility.SetDirty(lsv.RuText); rCount++; }
             }
 
-            // Assign Cardival & RoleModel font defaults in SkillCheckView & ResultView & ModifierCardUI prefabs/fallbacks
             if (uiController.SkillCheckView != null && uiController.SkillCheckView.ModifierCardPrefab != null)
             {
                 var prefabCard = uiController.SkillCheckView.ModifierCardPrefab;
-                if (prefabCard.NameText != null) { prefabCard.NameText.font = roleModelTMP; EditorUtility.SetDirty(prefabCard.NameText); }
-                if (prefabCard.ValueText != null) { prefabCard.ValueText.font = roleModelTMP; EditorUtility.SetDirty(prefabCard.ValueText); }
+                if (prefabCard.NameText != null) { prefabCard.NameText.font = cardivalTMP; EditorUtility.SetDirty(prefabCard.NameText); }
+                if (prefabCard.ValueText != null) { prefabCard.ValueText.font = cardivalTMP; EditorUtility.SetDirty(prefabCard.ValueText); }
             }
 
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
             UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
 
-            Debug.Log($"[FontAssetGenerator] Applied Cardival_TMP to {cCount} elements, RoleModel_TMP to {rCount} elements.");
+            Debug.Log($"[FontAssetGenerator] Applied Cardival_TMP font to all UI elements.");
         }
     }
 }

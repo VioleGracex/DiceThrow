@@ -13,10 +13,33 @@ namespace BG3DiceSystem.UI
     public class ResultView : MonoBehaviour
     {
         private ILocalizationService _localizationService;
+        private IAudioService _audioService;
+        private IEffectsService _effectsService;
 
         public void SetLocalizationService(ILocalizationService localizationService)
         {
             _localizationService = localizationService;
+        }
+
+        public void SetAudioService(IAudioService audioService)
+        {
+            _audioService = audioService;
+        }
+
+        public void SetEffectsService(IEffectsService effectsService)
+        {
+            _effectsService = effectsService;
+        }
+
+        [Zenject.Inject]
+        public void Construct(
+            ILocalizationService localizationService,
+            IAudioService audioService,
+            [Zenject.Inject(Optional = true)] IEffectsService effectsService = null)
+        {
+            _localizationService = localizationService;
+            _audioService = audioService;
+            _effectsService = effectsService;
         }
         [Header("Containers & Canvas")]
         public CanvasGroup ViewCanvasGroup;
@@ -31,12 +54,15 @@ namespace BG3DiceSystem.UI
         public GameObject ModifierCardsRow;
         public Transform ResultCardsContainer;
         public ScrollRect ResultCardsScrollRect;
+        public GameObject ResultCardPrefab;
 
         [Header("Settings Reference")]
         public RollSettingsSO Settings;
 
         [Header("Display Duration Settings")]
         public float DisplayDurationSeconds = 3.5f;
+
+        public event System.Action OnResultDisplayCompleted;
 
         private Coroutine _resultSequenceCoroutine;
         private readonly List<(GameObject cardObj, string title, int value)> _activeSpawnedCards = new List<(GameObject cardObj, string title, int value)>();
@@ -234,8 +260,30 @@ namespace BG3DiceSystem.UI
                     }
                     else
                     {
-                        // NEW card: create and animate pop-in ONLY for this newly added card!
-                        cardObj = CreateResultCardBox(ResultCardsContainer, item.title, item.value);
+                        // NEW card: instantiate from prefab if present, else fallback
+                        if (ResultCardPrefab != null)
+                        {
+                            cardObj = Instantiate(ResultCardPrefab, ResultCardsContainer);
+                            cardObj.name = "Card_" + item.title;
+
+                            var labelTMP = cardObj.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
+                            if (labelTMP != null)
+                            {
+                                string rawTitle = string.IsNullOrEmpty(item.title) ? "BONUS" : item.title;
+                                labelTMP.text = _localizationService != null ? _localizationService.GetModifierName(rawTitle).ToUpper() : rawTitle.ToUpper();
+                            }
+
+                            var valTMP = cardObj.transform.Find("Value")?.GetComponent<TextMeshProUGUI>();
+                            if (valTMP != null)
+                            {
+                                valTMP.text = (item.value >= 0 ? "+" : "") + item.value;
+                            }
+                        }
+                        else
+                        {
+                            cardObj = CreateResultCardBox(ResultCardsContainer, item.title, item.value);
+                        }
+
                         cardObj.transform.SetSiblingIndex(i);
                         AnimateCardSpawn(cardObj);
                     }
@@ -273,9 +321,6 @@ namespace BG3DiceSystem.UI
             if (rect != null)
             {
                 rect.DOKill();
-                Vector2 finalPos = rect.anchoredPosition;
-                rect.anchoredPosition = new Vector2(finalPos.x, finalPos.y - 18f);
-                rect.DOAnchorPosY(finalPos.y, 0.35f, Ease.OutQuad);
                 rect.localScale = Vector3.one * 0.85f;
                 rect.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutQuad);
             }
@@ -284,6 +329,11 @@ namespace BG3DiceSystem.UI
         public void DisplayResult(FinalRoll roll)
         {
             if (ViewCanvasGroup == null) return;
+            if (roll.SelectedDiceValue == 0 && roll.Total == 0 && string.IsNullOrEmpty(roll.SkillName))
+            {
+                Debug.LogWarning("[ResultView] Ignored empty default roll struct.");
+                return;
+            }
 
             Debug.Log($"[RollResult] Raw Dice: {roll.SelectedDiceValue} (DieA={roll.DiceValueA}, DieB={roll.DiceValueB}), Modifier: +{roll.Modifier}, DC: {roll.DifficultyClass}, Total: {roll.Total}, Outcome: {(roll.IsCriticalSuccess ? "CRITICAL SUCCESS" : (roll.IsCriticalFailure ? "CRITICAL FAILURE" : (roll.IsSuccess ? "SUCCESS" : "FAILURE")))}");
 
@@ -330,7 +380,7 @@ namespace BG3DiceSystem.UI
                 TotalText.gameObject.SetActive(true);
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.15f);
 
             // 2. Calculate base bonus vs applied modifiers
             int activeSum = 0;
@@ -347,7 +397,7 @@ namespace BG3DiceSystem.UI
             RefreshModifierCards(roll.AppliedModifiers, baseBonus);
             bool hasModifiers = _activeSpawnedCards.Count > 0;
 
-            yield return new WaitForSeconds(0.35f);
+            yield return new WaitForSeconds(0.12f);
 
             // 3. Sequentially fly each modifier card to TotalText
             if (hasModifiers && TotalText != null)
@@ -363,12 +413,14 @@ namespace BG3DiceSystem.UI
                         yield return StartCoroutine(ScrollToCardCoroutine(cardRect));
                     }
 
-                    // Highlight active card box smoothly without shake
+                    // Highlight active card box smoothly
                     cardData.cardObj.transform.DOKill();
-                    cardData.cardObj.transform.DOScale(Vector3.one * 1.1f, 0.18f).SetEase(Ease.OutQuad).OnComplete(() =>
+                    cardData.cardObj.transform.DOScale(Vector3.one * 1.08f, 0.12f).SetEase(Ease.OutQuad).OnComplete(() =>
                     {
-                        if (cardData.cardObj != null) cardData.cardObj.transform.DOScale(Vector3.one, 0.18f).SetEase(Ease.OutQuad);
+                        if (cardData.cardObj != null) cardData.cardObj.transform.DOScale(Vector3.one, 0.12f).SetEase(Ease.OutQuad);
                     });
+
+                    _audioService?.PlayCardSlide();
 
                     // Create flying payload
                     GameObject flyObj = CreateFlyingPayload(cardData.value, cardData.cardObj.transform.position);
@@ -376,7 +428,7 @@ namespace BG3DiceSystem.UI
                     Vector3 startPos = cardData.cardObj.transform.position;
                     Vector3 targetPos = TotalText.transform.position;
 
-                    float flyDuration = 0.4f;
+                    float flyDuration = 0.22f;
                     float elapsed = 0f;
 
                     while (elapsed < flyDuration)
@@ -384,7 +436,7 @@ namespace BG3DiceSystem.UI
                         elapsed += Time.deltaTime;
                         float t = elapsed / flyDuration;
                         Vector3 currentPos = Vector3.Lerp(startPos, targetPos, t);
-                        currentPos.y += Mathf.Sin(t * Mathf.PI) * 35f;
+                        currentPos.y += Mathf.Sin(t * Mathf.PI) * 25f;
                         if (flyObj != null) flyObj.transform.position = currentPos;
                         yield return null;
                     }
@@ -396,9 +448,9 @@ namespace BG3DiceSystem.UI
 
                     TotalText.transform.DOKill();
                     TotalText.transform.localScale = Vector3.one;
-                    TotalText.transform.DOPunchScale(Vector3.one * 0.35f, 0.2f);
+                    TotalText.transform.DOPunchScale(Vector3.one * 0.25f, 0.15f);
 
-                    yield return new WaitForSeconds(0.25f);
+                    yield return new WaitForSeconds(0.1f);
                 }
             }
             else if (TotalText != null)
@@ -406,7 +458,7 @@ namespace BG3DiceSystem.UI
                 TotalText.text = roll.Total.ToString();
             }
 
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.12f);
 
             // 4. Reveal Final Outcome Status Badge
             Color badgeColor = GetBadgeColor(roll);
@@ -427,12 +479,21 @@ namespace BG3DiceSystem.UI
 
             if (StatusBadgeBackground != null)
             {
-                StatusBadgeBackground.color = new Color(badgeColor.r, badgeColor.g, badgeColor.b, 0.35f);
+                Color darkBannerBg = roll.IsSuccess
+                    ? new Color(0.08f, 0.22f, 0.10f, 0.95f)  // Dark medieval emerald
+                    : new Color(0.25f, 0.08f, 0.08f, 0.95f); // Dark medieval crimson
+                StatusBadgeBackground.color = darkBannerBg;
                 StatusBadgeBackground.gameObject.SetActive(true);
                 StatusBadgeBackground.transform.DOKill();
                 StatusBadgeBackground.transform.localScale = Vector3.one;
                 StatusBadgeBackground.transform.DOPunchScale(Vector3.one * 0.25f, 0.4f);
             }
+
+            PlayOutcomeAudioAndEffects(roll);
+
+            yield return new WaitForSeconds(0.4f);
+
+            OnResultDisplayCompleted?.Invoke();
 
             float delay = (Settings != null && Settings.ResultDisplayDurationSeconds > 0)
                 ? Settings.ResultDisplayDurationSeconds
@@ -441,6 +502,30 @@ namespace BG3DiceSystem.UI
             yield return new WaitForSeconds(delay);
 
             HideResult();
+        }
+
+        private void PlayOutcomeAudioAndEffects(FinalRoll roll)
+        {
+            Vector3 overlayPos = new Vector3(1000f, 1000f, 0f);
+            if (roll.IsCriticalSuccess)
+            {
+                _audioService?.PlayCriticalSuccess();
+                _effectsService?.PlayCriticalSuccessExplosion(overlayPos);
+            }
+            else if (roll.IsCriticalFailure)
+            {
+                _audioService?.PlayCriticalFailure();
+                _effectsService?.PlayFailureFlash();
+            }
+            else if (roll.IsSuccess)
+            {
+                _audioService?.PlaySuccess();
+                _effectsService?.PlaySuccessGlow();
+            }
+            else
+            {
+                _audioService?.PlayFailure();
+            }
         }
 
         private IEnumerator ScrollToCardCoroutine(RectTransform targetCard, float duration = 0.25f)
@@ -535,17 +620,9 @@ namespace BG3DiceSystem.UI
             if (TakenText != null) TakenText.gameObject.SetActive(false);
             if (StatusBadgeText != null) StatusBadgeText.gameObject.SetActive(false);
             if (StatusBadgeBackground != null) StatusBadgeBackground.gameObject.SetActive(false);
+            if (ModifierCardsRow != null) ModifierCardsRow.SetActive(false);
 
-            if (_activeSpawnedCards.Count > 0 && ModifierCardsRow != null)
-            {
-                ModifierCardsRow.SetActive(true);
-                ModifierCardsRow.transform.DOKill();
-                ModifierCardsRow.transform.localScale = Vector3.one;
-            }
-            else if (ModifierCardsRow != null)
-            {
-                ModifierCardsRow.SetActive(false);
-            }
+            _activeSpawnedCards.Clear();
         }
 
         private GameObject CreateResultCardBox(Transform parent, string title, int value)
@@ -554,29 +631,36 @@ namespace BG3DiceSystem.UI
             cardObj.transform.SetParent(parent, false);
 
             RectTransform rect = cardObj.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(130f, 52f);
+            rect.sizeDelta = new Vector2(180f, 70f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
 
             Image cardBg = cardObj.GetComponent<Image>();
+#if UNITY_EDITOR
+            var rowBGSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Game/Art/UI/dice_throw__0000_Modifier_Row_BG.png");
+            if (rowBGSprite != null) { cardBg.sprite = rowBGSprite; cardBg.type = Image.Type.Sliced; cardBg.color = Color.white; }
+            else { cardBg.color = new Color(0.14f, 0.14f, 0.18f, 0.95f); }
+#else
             cardBg.color = new Color(0.14f, 0.14f, 0.18f, 0.95f);
+#endif
 
             Outline cardOutline = cardObj.GetComponent<Outline>();
             cardOutline.effectColor = new Color(0.95f, 0.78f, 0.35f, 0.85f);
-            cardOutline.effectDistance = new Vector2(2f, -2f);
+            cardOutline.effectDistance = new Vector2(2.5f, -2.5f);
 
             // Title Header Label (Top Half)
             GameObject headerObj = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             headerObj.transform.SetParent(cardObj.transform, false);
             RectTransform hRect = headerObj.GetComponent<RectTransform>();
-            hRect.anchorMin = new Vector2(0f, 0.52f);
-            hRect.anchorMax = new Vector2(1f, 0.98f);
-            hRect.offsetMin = new Vector2(4f, 0f);
-            hRect.offsetMax = new Vector2(-4f, 0f);
+            hRect.anchorMin = new Vector2(0f, 0.48f);
+            hRect.anchorMax = new Vector2(1f, 0.90f);
+            hRect.offsetMin = new Vector2(22f, 0f);
+            hRect.offsetMax = new Vector2(-22f, 0f);
             TextMeshProUGUI hTMP = headerObj.GetComponent<TextMeshProUGUI>();
             string rawTitle = string.IsNullOrEmpty(title) ? "BONUS" : title;
             hTMP.text = _localizationService != null ? _localizationService.GetModifierName(rawTitle).ToUpper() : rawTitle.ToUpper();
-            hTMP.fontSize = 11;
+            hTMP.fontSize = 13.5f;
             hTMP.fontStyle = FontStyles.Bold;
-            hTMP.color = new Color(0.95f, 0.78f, 0.35f, 1f);
+            hTMP.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             hTMP.alignment = TextAlignmentOptions.Center;
             hTMP.textWrappingMode = TextWrappingModes.NoWrap;
             hTMP.overflowMode = TextOverflowModes.Ellipsis;
@@ -585,23 +669,23 @@ namespace BG3DiceSystem.UI
             GameObject valObj = new GameObject("Value", typeof(RectTransform), typeof(TextMeshProUGUI));
             valObj.transform.SetParent(cardObj.transform, false);
             RectTransform vRect = valObj.GetComponent<RectTransform>();
-            vRect.anchorMin = new Vector2(0f, 0f);
-            vRect.anchorMax = new Vector2(1f, 0.52f);
-            vRect.offsetMin = Vector2.zero;
-            vRect.offsetMax = Vector2.zero;
+            vRect.anchorMin = new Vector2(0f, 0.12f);
+            vRect.anchorMax = new Vector2(1f, 0.50f);
+            vRect.offsetMin = new Vector2(22f, 4f);
+            vRect.offsetMax = new Vector2(-22f, 0f);
             TextMeshProUGUI vTMP = valObj.GetComponent<TextMeshProUGUI>();
             vTMP.text = (value >= 0 ? "+" : "") + value;
-            vTMP.fontSize = 18;
+            vTMP.fontSize = 20f;
             vTMP.fontStyle = FontStyles.Bold;
-            vTMP.color = Color.white;
+            vTMP.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             vTMP.alignment = TextAlignmentOptions.Center;
 
 #if UNITY_EDITOR
-            var roleModelTMP = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Game/Art/Fonts/RoleModel_TMP.asset");
-            if (roleModelTMP != null)
+            var cardivalTMP = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/_Game/Art/Fonts/Cardival_TMP.asset");
+            if (cardivalTMP != null)
             {
-                hTMP.font = roleModelTMP;
-                vTMP.font = roleModelTMP;
+                hTMP.font = cardivalTMP;
+                vTMP.font = cardivalTMP;
             }
 #endif
 

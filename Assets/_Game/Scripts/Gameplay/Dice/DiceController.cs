@@ -1,13 +1,51 @@
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace BG3DiceSystem.Gameplay.Dice
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class DiceController : MonoBehaviour
+    public class DiceController : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IDragHandler
     {
         public event Action<Transform, float> OnImpact;
         public event Action OnDiceClicked;
+        public event Action OnDiceSwiped;
+
+        private Vector2 _pointerStartPos;
+        private bool _isPointerActive;
+        private const float SwipeThreshold = 12f;
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _pointerStartPos = eventData.position;
+            _isPointerActive = true;
+        }
+
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (_isPointerActive)
+            {
+                float delta = Vector2.Distance(eventData.position, _pointerStartPos);
+                if (delta >= SwipeThreshold)
+                {
+                    _isPointerActive = false;
+                    Debug.Log($"[DiceController] Swipe gesture detected on die '{gameObject.name}'! (delta: {delta:F1}px)");
+                    OnDiceSwiped?.Invoke();
+                }
+            }
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            _isPointerActive = false;
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (_isPointerActive || eventData.dragging) return;
+            Debug.Log($"[DiceController] PointerClick detected on die '{gameObject.name}'!");
+            OnDiceClicked?.Invoke();
+        }
 
         [Header("Components")]
         public Rigidbody RigidBody;
@@ -148,10 +186,7 @@ namespace BG3DiceSystem.Gameplay.Dice
             return transform.rotation;
         }
 
-        private void OnMouseDown()
-        {
-            OnDiceClicked?.Invoke();
-        }
+
 
         private void OnCollisionEnter(Collision collision)
         {

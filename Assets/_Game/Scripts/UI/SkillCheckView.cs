@@ -327,9 +327,18 @@ namespace BG3DiceSystem.UI
             string localizedDesc = _localizationService != null ? _localizationService.GetSkillDescription(skillName) : description;
             if (string.IsNullOrEmpty(localizedDesc)) localizedDesc = description;
 
-            if (SelectedSkillNameText != null) SelectedSkillNameText.text = localizedName;
-            if (SkillDescriptionText != null) SkillDescriptionText.text = localizedDesc;
-            if (TargetInfoText != null) TargetInfoText.text = _localizationService != null ? _localizationService.GetText("target_dc_fmt", dc) : $"Target DC: {dc}";
+            if (SelectedSkillNameText != null) {
+                SelectedSkillNameText.text = localizedName;
+                SelectedSkillNameText.color = new Color(0.22f, 0.08f, 0.03f, 1f);
+            }
+            if (SkillDescriptionText != null) {
+                SkillDescriptionText.text = localizedDesc;
+                SkillDescriptionText.color = new Color(0.18f, 0.14f, 0.10f, 1f);
+            }
+            if (TargetInfoText != null) {
+                TargetInfoText.text = _localizationService != null ? _localizationService.GetText("target_dc_fmt", dc) : $"Target DC: {dc}";
+                TargetInfoText.color = new Color(0.22f, 0.08f, 0.03f, 1f);
+            }
 
             if (TopDCHeaderLabelText != null)
             {
@@ -428,7 +437,13 @@ namespace BG3DiceSystem.UI
             rect.sizeDelta = new Vector2(0f, 40f);
 
             Image bg = cardObj.GetComponent<Image>();
+#if UNITY_EDITOR
+            var rowBGSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Game/Art/UI/dice_throw__0000_Modifier_Row_BG.png");
+            if (rowBGSprite != null) { bg.sprite = rowBGSprite; bg.color = Color.white; }
+            else { bg.color = new Color(0.16f, 0.16f, 0.22f, 0.95f); }
+#else
             bg.color = new Color(0.16f, 0.16f, 0.22f, 0.95f);
+#endif
 
             Outline outline = cardObj.GetComponent<Outline>();
             outline.effectColor = new Color(0.95f, 0.78f, 0.35f, 0.4f);
@@ -440,12 +455,12 @@ namespace BG3DiceSystem.UI
             RectTransform nameRect = nameObj.GetComponent<RectTransform>();
             nameRect.anchorMin = new Vector2(0f, 0f);
             nameRect.anchorMax = new Vector2(0.42f, 1f);
-            nameRect.offsetMin = new Vector2(10f, 2f);
+            nameRect.offsetMin = new Vector2(24f, 2f);
             nameRect.offsetMax = new Vector2(0f, -2f);
             TextMeshProUGUI nameTMP = nameObj.GetComponent<TextMeshProUGUI>();
             nameTMP.fontSize = 13;
             nameTMP.fontStyle = FontStyles.Bold;
-            nameTMP.color = Color.white;
+            nameTMP.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             nameTMP.alignment = TextAlignmentOptions.MidlineLeft;
             nameTMP.textWrappingMode = TextWrappingModes.NoWrap;
 
@@ -453,11 +468,18 @@ namespace BG3DiceSystem.UI
             GameObject minusObj = new GameObject("MinusBtn", typeof(RectTransform), typeof(Image), typeof(Button));
             minusObj.transform.SetParent(cardObj.transform, false);
             RectTransform minusRect = minusObj.GetComponent<RectTransform>();
-            minusRect.anchorMin = new Vector2(0.44f, 0.5f);
-            minusRect.anchorMax = new UnityEngine.Vector2(0.44f, 0.5f);
+            minusRect.anchorMin = new Vector2(0.43f, 0.5f);
+            minusRect.anchorMax = new UnityEngine.Vector2(0.43f, 0.5f);
             minusRect.pivot = new Vector2(0f, 0.5f);
             minusRect.sizeDelta = new Vector2(24f, 24f);
-            minusObj.GetComponent<Image>().color = new Color(0.22f, 0.22f, 0.30f, 0.95f);
+            Image minusImg = minusObj.GetComponent<Image>();
+#if UNITY_EDITOR
+            var minusSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Game/Art/UI/dice_throw__0002_-_Btn.png");
+            if (minusSprite != null) { minusImg.sprite = minusSprite; minusImg.color = Color.white; }
+            else { minusImg.color = new Color(0.22f, 0.22f, 0.30f, 0.95f); }
+#else
+            minusImg.color = new Color(0.22f, 0.22f, 0.30f, 0.95f);
+#endif
             Button minusBtn = minusObj.GetComponent<Button>();
 
             GameObject mLabelObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -471,24 +493,31 @@ namespace BG3DiceSystem.UI
             GameObject valObj = new GameObject("ValueText", typeof(RectTransform), typeof(TextMeshProUGUI));
             valObj.transform.SetParent(cardObj.transform, false);
             RectTransform valRect = valObj.GetComponent<RectTransform>();
-            valRect.anchorMin = new Vector2(0.55f, 0f);
-            valRect.anchorMax = new Vector2(0.72f, 1f);
+            valRect.anchorMin = new Vector2(0.54f, 0f);
+            valRect.anchorMax = new Vector2(0.68f, 1f);
             valRect.offsetMin = Vector2.zero; valRect.offsetMax = Vector2.zero;
             TextMeshProUGUI valTMP = valObj.GetComponent<TextMeshProUGUI>();
             valTMP.fontSize = 14;
             valTMP.fontStyle = FontStyles.Bold;
-            valTMP.color = new Color(0.95f, 0.78f, 0.35f, 1f);
+            valTMP.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             valTMP.alignment = TextAlignmentOptions.Center;
 
             // Plus Button (+)
             GameObject plusObj = new GameObject("PlusBtn", typeof(RectTransform), typeof(Image), typeof(Button));
             plusObj.transform.SetParent(cardObj.transform, false);
             RectTransform plusRect = plusObj.GetComponent<RectTransform>();
-            plusRect.anchorMin = new Vector2(0.74f, 0.5f);
-            plusRect.anchorMax = new Vector2(0.74f, 0.5f);
+            plusRect.anchorMin = new Vector2(0.70f, 0.5f);
+            plusRect.anchorMax = new Vector2(0.70f, 0.5f);
             plusRect.pivot = new Vector2(0f, 0.5f);
             plusRect.sizeDelta = new Vector2(24f, 24f);
-            plusObj.GetComponent<Image>().color = new Color(0.22f, 0.22f, 0.30f, 0.95f);
+            Image plusImg = plusObj.GetComponent<Image>();
+#if UNITY_EDITOR
+            var plusSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Game/Art/UI/dice_throw__0003_+_Btn.png");
+            if (plusSprite != null) { plusImg.sprite = plusSprite; plusImg.color = Color.white; }
+            else { plusImg.color = new Color(0.22f, 0.22f, 0.30f, 0.95f); }
+#else
+            plusImg.color = new Color(0.22f, 0.22f, 0.30f, 0.95f);
+#endif
             Button plusBtn = plusObj.GetComponent<Button>();
 
             GameObject pLabelObj = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -506,7 +535,7 @@ namespace BG3DiceSystem.UI
             btnRect.anchorMax = new Vector2(1f, 0.5f);
             btnRect.pivot = new Vector2(1f, 0.5f);
             btnRect.sizeDelta = new Vector2(24f, 24f);
-            btnRect.anchoredPosition = new Vector2(-4f, 0f);
+            btnRect.anchoredPosition = new Vector2(-26f, 0f);
 
             Image btnImg = btnObj.GetComponent<Image>();
             btnImg.color = new Color(0.85f, 0.25f, 0.25f, 0.9f);
@@ -575,11 +604,21 @@ namespace BG3DiceSystem.UI
             {
                 ViewCanvasGroup.DOKill();
                 ViewCanvasGroup.interactable = interactable;
-                ViewCanvasGroup.DOFade(interactable ? 1f : 0.4f, 0.3f);
+                ViewCanvasGroup.alpha = 1f;
             }
             if (RollButton != null)
             {
                 RollButton.interactable = interactable;
+            }
+            if (DiceButtons != null)
+            {
+                foreach (var b in DiceButtons)
+                {
+                    if (b != null)
+                    {
+                        b.SetInteractable(interactable);
+                    }
+                }
             }
         }
         #endregion
@@ -670,7 +709,7 @@ namespace BG3DiceSystem.UI
             if (DropdownChevronButton != null)
             {
                 DropdownChevronButton.transform.DOKill();
-                DropdownChevronButton.transform.DORotate(new Vector3(0f, 0f, _topBarExpanded ? 0f : 180f), 0.35f, Ease.OutQuad);
+                DropdownChevronButton.transform.localRotation = Quaternion.identity;
             }
         }
         #endregion
@@ -687,7 +726,7 @@ namespace BG3DiceSystem.UI
             var templateImg = template.GetComponent<Image>();
             if (templateImg != null)
             {
-                templateImg.color = new Color(0.12f, 0.12f, 0.16f, 0.98f);
+                templateImg.color = (templateImg.sprite != null) ? Color.white : new Color(0.16f, 0.12f, 0.08f, 0.98f);
             }
 
             var viewport = template.Find("Viewport");
@@ -696,7 +735,7 @@ namespace BG3DiceSystem.UI
                 var vpImg = viewport.GetComponent<Image>();
                 if (vpImg != null)
                 {
-                    vpImg.color = new Color(0.12f, 0.12f, 0.16f, 0.95f);
+                    vpImg.color = (vpImg.sprite != null) ? Color.white : new Color(0.16f, 0.12f, 0.08f, 0.98f);
                 }
 
                 var content = viewport.Find("Content");
@@ -727,10 +766,10 @@ namespace BG3DiceSystem.UI
                 }
 
                 var colors = item.colors;
-                colors.normalColor = new Color(0.18f, 0.18f, 0.24f, 1f);
-                colors.highlightedColor = new Color(0.95f, 0.78f, 0.35f, 1f);
-                colors.pressedColor = new Color(0.85f, 0.68f, 0.25f, 1f);
-                colors.selectedColor = new Color(0.95f, 0.78f, 0.35f, 1f);
+                colors.normalColor = new Color(0.22f, 0.16f, 0.12f, 1f);
+                colors.highlightedColor = new Color(0.78f, 0.58f, 0.22f, 1f);
+                colors.pressedColor = new Color(0.65f, 0.48f, 0.18f, 1f);
+                colors.selectedColor = new Color(0.78f, 0.58f, 0.22f, 1f);
                 item.colors = colors;
 
                 var itemBg = item.transform.Find("Item Background")?.GetComponent<Image>();
@@ -747,7 +786,7 @@ namespace BG3DiceSystem.UI
                     lRect.offsetMax = new Vector2(-14f, 0f);
                     itemLabel.fontSize = 14;
                     itemLabel.alignment = TextAlignmentOptions.MidlineLeft;
-                    itemLabel.color = new Color(0.95f, 0.95f, 0.98f, 1f);
+                    itemLabel.color = new Color(0.96f, 0.92f, 0.84f, 1f);
                 }
             }
         }

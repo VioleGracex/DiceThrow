@@ -22,6 +22,10 @@ namespace BG3DiceSystem.UI
         public ResultView ResultView;
         public HistoryView HistoryView;
         public LanguageSelectorUI LanguageSelectorView;
+        public QuitButtonUI QuitButtonView;
+
+        [Header("Swipe & Click Touch Detector")]
+        public DiceArenaSwipeDetector SwipeDetector;
 
         [Header("Automated Test Suite References")]
         public AutoPlayTestView AutoPlayTestView;
@@ -34,6 +38,7 @@ namespace BG3DiceSystem.UI
         private IRollService _rollService;
         private IAudioService _audioService;
         private ILocalizationService _localizationService;
+        private IEffectsService _effectsService;
         private bool _isInitialized;
         #endregion
 
@@ -44,14 +49,22 @@ namespace BG3DiceSystem.UI
             IDiceService diceService,
             IRollService rollService,
             IAudioService audioService,
-            ILocalizationService localizationService)
+            ILocalizationService localizationService,
+            [Inject(Optional = true)] IEffectsService effectsService = null)
         {
             _skillService = skillService;
             _diceService = diceService;
             _rollService = rollService;
             _audioService = audioService;
             _localizationService = localizationService;
+            _effectsService = effectsService;
         }
+        #endregion
+
+        private bool _isSequenceAnimating;
+
+        #region Public Properties
+        public bool IsRolling => _isSequenceAnimating || (_rollService != null && _rollService.IsRolling) || (_diceService != null && _diceService.IsRolling);
         #endregion
 
         #region Unity Lifecycle & Initialization (Single Source of Truth)
@@ -95,6 +108,11 @@ namespace BG3DiceSystem.UI
             if (ResultView != null)
             {
                 ResultView.SetLocalizationService(_localizationService);
+                ResultView.SetAudioService(_audioService);
+                ResultView.SetEffectsService(_effectsService);
+                ResultView.OnResultDisplayCompleted -= HandleResultDisplayCompleted;
+                ResultView.OnResultDisplayCompleted += HandleResultDisplayCompleted;
+                ResultView.HideResult();
             }
 
             if (HistoryView != null)
@@ -116,6 +134,22 @@ namespace BG3DiceSystem.UI
             if (LanguageSelectorView != null)
             {
                 LanguageSelectorView.Initialize(_localizationService, _audioService);
+            }
+
+            if (QuitButtonView == null)
+            {
+                QuitButtonView = GetComponentInChildren<QuitButtonUI>(true);
+                if (QuitButtonView == null)
+                {
+                    GameObject quitObj = new GameObject("QuitButtonUI");
+                    quitObj.transform.SetParent(transform, false);
+                    QuitButtonView = quitObj.AddComponent<QuitButtonUI>();
+                }
+            }
+
+            if (QuitButtonView != null)
+            {
+                QuitButtonView.Initialize(_localizationService, _audioService);
             }
 
             if (AutoPlayTestRunner == null)
@@ -221,6 +255,16 @@ namespace BG3DiceSystem.UI
                 _diceService.OnRollRequested += HandleRollClicked;
             }
 
+            var directDetectors = UnityEngine.Object.FindObjectsByType<DiceDirectRaycastDetector>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            foreach (var d in directDetectors)
+            {
+                if (d != null)
+                {
+                    d.OnRollRequested -= HandleRollClicked;
+                    d.OnRollRequested += HandleRollClicked;
+                }
+            }
+
             if (_localizationService != null)
             {
                 _localizationService.OnLanguageChanged += HandleLanguageChanged;
@@ -234,9 +278,23 @@ namespace BG3DiceSystem.UI
                 _localizationService.OnLanguageChanged -= HandleLanguageChanged;
             }
 
+            if (ResultView != null)
+            {
+                ResultView.OnResultDisplayCompleted -= HandleResultDisplayCompleted;
+            }
+
             if (_diceService != null)
             {
                 _diceService.OnRollRequested -= HandleRollClicked;
+            }
+
+            var directDetectors = UnityEngine.Object.FindObjectsByType<DiceDirectRaycastDetector>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            foreach (var d in directDetectors)
+            {
+                if (d != null)
+                {
+                    d.OnRollRequested -= HandleRollClicked;
+                }
             }
             if (SkillCheckView != null)
             {
@@ -340,9 +398,27 @@ namespace BG3DiceSystem.UI
             }
         }
 
+        private float _lastRollTime = -999f;
+        public float RollCooldownSeconds = 5.0f;
+
         private async void HandleRollClicked()
         {
-            if (_rollService == null || _rollService.IsRolling) return;
+            if (Time.time - _lastRollTime < RollCooldownSeconds)
+            {
+                Debug.Log($"[UIController] Roll request ignored: 5s cooldown active ({RollCooldownSeconds - (Time.time - _lastRollTime):F1}s remaining).");
+                return;
+            }
+
+            if (_rollService == null || _rollService.IsRolling || (_diceService != null && _diceService.IsRolling)) return;
+
+            _lastRollTime = Time.time;
+
+            // Trigger cooldown on raycast detectors immediately
+            var directDetectors = UnityEngine.Object.FindObjectsByType<DiceDirectRaycastDetector>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            foreach (var d in directDetectors)
+            {
+                if (d != null) d.TriggerCooldown(RollCooldownSeconds);
+            }
 
             ResultView?.HideResult();
             await _rollService.ExecuteRollAsync();
@@ -352,14 +428,54 @@ namespace BG3DiceSystem.UI
         #region Service Event Handlers & Display Updates
         private void HandleRollStarted()
         {
+            _isSequenceAnimating = true;
             SkillCheckView?.SetInteractable(false);
+            SetDetectorsEnabled(false);
         }
 
         private void HandleRollCompleted(FinalRoll result)
         {
-            SkillCheckView?.SetInteractable(true);
+            if (result.SelectedDiceValue == 0 && result.Total == 0 && string.IsNullOrEmpty(result.SkillName))
+            {
+                Debug.LogWarning("[UIController] Ignored empty/default roll completed event.");
+                _isSequenceAnimating = false;
+                SkillCheckView?.SetInteractable(true);
+                SetDetectorsEnabled(true);
+                return;
+            }
+
             ResultView?.DisplayResult(result);
             HistoryView?.AddHistoryEntry(result);
+        }
+
+        private void HandleResultDisplayCompleted()
+        {
+            _isSequenceAnimating = false;
+            SkillCheckView?.SetInteractable(true);
+            SetDetectorsEnabled(true);
+            Debug.Log("[UIController] Roll result sequence animation completed. System ready for next roll.");
+        }
+
+        private void SetDetectorsEnabled(bool isEnabled)
+        {
+            var swipeDetectors = UnityEngine.Object.FindObjectsByType<DiceArenaSwipeDetector>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            foreach (var d in swipeDetectors)
+            {
+                if (d != null) d.IsEnabled = isEnabled;
+            }
+
+            var directDetectors = UnityEngine.Object.FindObjectsByType<DiceDirectRaycastDetector>(UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None);
+            foreach (var d in directDetectors)
+            {
+                if (d != null)
+                {
+                    d.IsEnabled = isEnabled;
+                    if (!isEnabled)
+                    {
+                        d.TriggerCooldown(5.0f);
+                    }
+                }
+            }
         }
 
         private void UpdateSkillDisplay()

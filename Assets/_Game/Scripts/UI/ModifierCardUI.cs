@@ -42,12 +42,14 @@ namespace BG3DiceSystem.UI
             {
                 string rawName = string.IsNullOrEmpty(data.Name) ? "Modifier" : data.Name;
                 NameText.text = localizationService != null ? localizationService.GetModifierName(rawName) : rawName;
+                NameText.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             }
 
             if (ValueText != null)
             {
                 string sign = data.Value > 0 ? "+" : "";
                 ValueText.text = $"{sign}{data.Value}";
+                ValueText.color = new Color(0.12f, 0.08f, 0.04f, 1f);
             }
 
             if (MinusButton != null)
@@ -90,7 +92,7 @@ namespace BG3DiceSystem.UI
         {
             if (CardBackground != null)
             {
-                CardBackground.color = new Color(0.16f, 0.16f, 0.22f, 0.95f);
+                CardBackground.color = (CardBackground.sprite != null) ? Color.white : new Color(0.16f, 0.16f, 0.22f, 0.95f);
             }
             if (CardOutline != null)
             {
