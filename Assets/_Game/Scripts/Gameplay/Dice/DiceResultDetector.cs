@@ -70,7 +70,7 @@ namespace BG3DiceSystem.Gameplay.Dice
 
                 case DiceType.D10: return new List<DiceFaceEntry>
                 {
-                    new DiceFaceEntry { FaceValue =  1, EulerRotation = new Vector3( 34.9f, 210.4f, 261.6f) },
+                    new DiceFaceEntry { FaceValue =  1, EulerRotation = new Vector3(145.1f,  30.4f,  81.8f) },
                     new DiceFaceEntry { FaceValue =  2, EulerRotation = new Vector3( 45.0f,   0.0f,   0.0f) },
                     new DiceFaceEntry { FaceValue =  3, EulerRotation = new Vector3( 34.9f, 149.6f,  98.4f) },
                     new DiceFaceEntry { FaceValue =  4, EulerRotation = new Vector3(325.1f, 329.5f,   9.8f) },
