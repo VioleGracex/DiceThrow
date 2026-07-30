@@ -6,6 +6,7 @@ using BG3DiceSystem.Core.Interfaces;
 using BG3DiceSystem.Gameplay.Dice;
 using BG3DiceSystem.Gameplay.Roll;
 using BG3DiceSystem.Gameplay.Skills;
+using BG3DiceSystem.Testing;
 
 namespace BG3DiceSystem.UI
 {
@@ -20,6 +21,10 @@ namespace BG3DiceSystem.UI
         public SkillCheckView SkillCheckView;
         public ResultView ResultView;
         public HistoryView HistoryView;
+
+        [Header("Automated Test Suite References")]
+        public AutoPlayTestView AutoPlayTestView;
+        public AutoPlayTestRunner AutoPlayTestRunner;
         #endregion
 
         #region Private Fields & Dependencies
@@ -82,6 +87,25 @@ namespace BG3DiceSystem.UI
                 SkillCheckView.InitializeView();
             }
 
+            if (AutoPlayTestRunner == null)
+            {
+                AutoPlayTestRunner = GetComponent<AutoPlayTestRunner>();
+                if (AutoPlayTestRunner == null)
+                {
+                    AutoPlayTestRunner = gameObject.AddComponent<AutoPlayTestRunner>();
+                }
+            }
+
+            if (AutoPlayTestRunner != null)
+            {
+                AutoPlayTestRunner.Construct(_skillService, _diceService, _rollService);
+            }
+
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.InitializeView();
+            }
+
             // 2. Populate Data Displays
             InitializeSkillView();
 
@@ -92,7 +116,8 @@ namespace BG3DiceSystem.UI
             if (_diceService != null)
             {
                 Debug.Log("[UIController] Setting initial default dice selection to D20.");
-                _diceService.CurrentDiceType = DiceType.D20;
+                RollMode initMode = _rollService != null ? _rollService.CurrentRollMode : RollMode.SingleDie;
+                _diceService.SpawnPreviewDice(DiceType.D20, initMode);
             }
             if (SkillCheckView != null)
             {
@@ -130,6 +155,21 @@ namespace BG3DiceSystem.UI
                 SkillCheckView.OnAddModifierRequested += HandleAddModifierRequested;
                 SkillCheckView.OnAdjustModifierValueRequested += HandleAdjustModifierValueRequested;
                 SkillCheckView.OnRemoveModifierRequested += HandleRemoveModifierRequested;
+                SkillCheckView.OnAutoTestClicked += HandleAutoTestClicked;
+            }
+
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.OnStartTestsRequested += HandleStartAutoTests;
+                AutoPlayTestView.OnStopTestsRequested += HandleStopAutoTests;
+                AutoPlayTestView.OnWaitTimeChanged += HandleTestWaitTimeChanged;
+            }
+
+            if (AutoPlayTestRunner != null)
+            {
+                AutoPlayTestRunner.OnTestSequenceStarted += HandleTestSequenceStarted;
+                AutoPlayTestRunner.OnTestStepCompleted += HandleTestStepCompleted;
+                AutoPlayTestRunner.OnTestSequenceCompleted += HandleTestSequenceCompleted;
             }
 
             if (_skillService != null)
@@ -143,10 +183,19 @@ namespace BG3DiceSystem.UI
                 _rollService.OnRollStarted += HandleRollStarted;
                 _rollService.OnRollCompleted += HandleRollCompleted;
             }
+
+            if (_diceService != null)
+            {
+                _diceService.OnRollRequested += HandleRollClicked;
+            }
         }
 
         private void UnsubscribeEvents()
         {
+            if (_diceService != null)
+            {
+                _diceService.OnRollRequested -= HandleRollClicked;
+            }
             if (SkillCheckView != null)
             {
                 SkillCheckView.OnSkillSelected -= HandleSkillSelected;
@@ -157,6 +206,21 @@ namespace BG3DiceSystem.UI
                 SkillCheckView.OnAddModifierRequested -= HandleAddModifierRequested;
                 SkillCheckView.OnAdjustModifierValueRequested -= HandleAdjustModifierValueRequested;
                 SkillCheckView.OnRemoveModifierRequested -= HandleRemoveModifierRequested;
+                SkillCheckView.OnAutoTestClicked -= HandleAutoTestClicked;
+            }
+
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.OnStartTestsRequested -= HandleStartAutoTests;
+                AutoPlayTestView.OnStopTestsRequested -= HandleStopAutoTests;
+                AutoPlayTestView.OnWaitTimeChanged -= HandleTestWaitTimeChanged;
+            }
+
+            if (AutoPlayTestRunner != null)
+            {
+                AutoPlayTestRunner.OnTestSequenceStarted -= HandleTestSequenceStarted;
+                AutoPlayTestRunner.OnTestStepCompleted -= HandleTestStepCompleted;
+                AutoPlayTestRunner.OnTestSequenceCompleted -= HandleTestSequenceCompleted;
             }
 
             if (_skillService != null)
@@ -217,6 +281,10 @@ namespace BG3DiceSystem.UI
             {
                 _rollService.CurrentRollMode = mode;
             }
+            if (_diceService != null)
+            {
+                _diceService.SpawnPreviewDice(_diceService.CurrentDiceType, mode);
+            }
         }
 
         private void HandleDiceTypeSelected(DiceType type)
@@ -225,7 +293,8 @@ namespace BG3DiceSystem.UI
             ResultView?.HideResult();
             if (_diceService != null)
             {
-                _diceService.CurrentDiceType = type;
+                RollMode currentMode = _rollService != null ? _rollService.CurrentRollMode : RollMode.SingleDie;
+                _diceService.SpawnPreviewDice(type, currentMode);
             }
         }
 
@@ -267,6 +336,81 @@ namespace BG3DiceSystem.UI
             {
                 SkillCheckView.UpdateModifierDisplay(_skillService.CurrentModifier);
                 SkillCheckView.RenderModifierCards(_skillService.ActiveModifiers, _skillService.MaxModifierCards);
+            }
+            if (_skillService != null && ResultView != null)
+            {
+                ResultView.RefreshModifierCards(_skillService.ActiveModifiers, _skillService.BaseModifier);
+            }
+        }
+        #endregion
+
+        #region Automated Test Handlers
+        private void HandleAutoTestClicked()
+        {
+            _audioService?.PlayButtonClick();
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.ShowView();
+            }
+            else
+            {
+                HandleStartAutoTests();
+            }
+        }
+
+        private async void HandleStartAutoTests()
+        {
+            _audioService?.PlayButtonClick();
+            if (AutoPlayTestRunner != null)
+            {
+                if (AutoPlayTestView != null && AutoPlayTestView.WaitTimeSlider != null)
+                {
+                    AutoPlayTestRunner.WaitTimeBetweenTests = AutoPlayTestView.WaitTimeSlider.value;
+                }
+                await AutoPlayTestRunner.RunAllTestsAsync();
+            }
+        }
+
+        private void HandleStopAutoTests()
+        {
+            _audioService?.PlayButtonClick();
+            if (AutoPlayTestRunner != null)
+            {
+                AutoPlayTestRunner.CancelTests();
+            }
+        }
+
+        private void HandleTestWaitTimeChanged(float seconds)
+        {
+            if (AutoPlayTestRunner != null)
+            {
+                AutoPlayTestRunner.WaitTimeBetweenTests = seconds;
+            }
+        }
+
+        private void HandleTestSequenceStarted()
+        {
+            SkillCheckView?.SetInteractable(false);
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.SetRunningState(true);
+            }
+        }
+
+        private void HandleTestStepCompleted(int current, int total, TestCaseResult result)
+        {
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.UpdateProgress(current, total, result);
+            }
+        }
+
+        private void HandleTestSequenceCompleted(TestReport report)
+        {
+            SkillCheckView?.SetInteractable(true);
+            if (AutoPlayTestView != null)
+            {
+                AutoPlayTestView.DisplayFinalReport(report);
             }
         }
         #endregion

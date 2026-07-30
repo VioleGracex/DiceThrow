@@ -11,12 +11,13 @@ namespace BG3DiceSystem.Core.Interfaces
     {
         event Action<Transform, float> OnDiceImpact;
         event Action<DiceType> OnDiceTypeChanged;
+        event Action OnRollRequested;
 
         DiceType CurrentDiceType { get; set; }
         bool IsRolling { get; }
 
         Task<List<int>> RollDiceAsync(RollMode mode);
-        void SpawnPreviewDice(DiceType type);
+        void SpawnPreviewDice(DiceType type, RollMode mode = RollMode.SingleDie);
         void ClearActiveDice();
     }
 }

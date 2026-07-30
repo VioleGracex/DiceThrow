@@ -21,6 +21,7 @@ namespace BG3DiceSystem.UI
         public event Action<string, int> OnAddModifierRequested;
         public event Action<string, int> OnAdjustModifierValueRequested;
         public event Action<string> OnRemoveModifierRequested;
+        public event Action OnAutoTestClicked;
         #endregion
 
         #region Inspector Fields - Top Area & Dice Buttons
@@ -47,6 +48,7 @@ namespace BG3DiceSystem.UI
         public Toggle SingleDieToggle;
         public Toggle AdvantageToggle;
         public Button HistoryTabButton;
+        public Button AutoTestButton;
 
         [Header("Left Panel ScrollView & Modifier Cards")]
         public ScrollRect ModifierScrollRect;
@@ -189,7 +191,15 @@ namespace BG3DiceSystem.UI
                 AddModifierButton.onClick.RemoveAllListeners();
                 AddModifierButton.onClick.AddListener(() => {
                     AnimateButton(AddModifierButton.transform);
-                    OnAddModifierRequested?.Invoke("Modifier", 1);
+                    OnAddModifierRequested?.Invoke("Bonus", 1);
+                });
+            }
+            if (AutoTestButton != null)
+            {
+                AutoTestButton.onClick.RemoveAllListeners();
+                AutoTestButton.onClick.AddListener(() => {
+                    AnimateButton(AutoTestButton.transform);
+                    OnAutoTestClicked?.Invoke();
                 });
             }
         }
@@ -227,27 +237,32 @@ namespace BG3DiceSystem.UI
 
         public void UpdateSkillDisplay(string skillName, int dc, string description)
         {
-            if (DCText != null) DCText.text = "Difficulty Class (DC " + dc.ToString() + ")";
+            if (DCText != null)
+            {
+                DCText.transform.DOKill();
+                DCText.transform.localScale = Vector3.one;
+                DCText.text = "Difficulty Class (DC " + dc.ToString() + ")";
+            }
             if (SelectedSkillNameText != null) SelectedSkillNameText.text = skillName;
             if (SkillDescriptionText != null) SkillDescriptionText.text = description;
             if (TargetInfoText != null) TargetInfoText.text = $"Target DC: {dc}";
 
             if (TopDCNumberValueText != null)
             {
+                TopDCNumberValueText.transform.DOKill();
+                TopDCNumberValueText.transform.localScale = Vector3.one;
                 TopDCNumberValueText.text = dc.ToString();
-                TopDCNumberValueText.transform.DOPunchScale(Vector3.one * 0.2f, 0.35f);
             }
-
-            if (DCText != null) DCText.transform.DOPunchScale(Vector3.one * 0.15f, 0.3f);
         }
 
         public void UpdateModifierDisplay(int modifier)
         {
             if (ModifierText != null)
             {
-                string modString = modifier == 0 ? "Modifier (0)" : "Modifier (" + (modifier > 0 ? "+" : "") + modifier.ToString() + ")";
+                ModifierText.transform.DOKill();
+                ModifierText.transform.localScale = Vector3.one;
+                string modString = modifier == 0 ? "Bonus (0)" : "Bonus (" + (modifier > 0 ? "+" : "") + modifier.ToString() + ")";
                 ModifierText.text = modString;
-                ModifierText.transform.DOPunchScale(Vector3.one * 0.2f, 0.25f);
             }
         }
 
@@ -454,6 +469,7 @@ namespace BG3DiceSystem.UI
         {
             if (ViewCanvasGroup != null)
             {
+                ViewCanvasGroup.DOKill();
                 ViewCanvasGroup.interactable = interactable;
                 ViewCanvasGroup.DOFade(interactable ? 1f : 0.4f, 0.3f);
             }
@@ -544,10 +560,12 @@ namespace BG3DiceSystem.UI
 
             if (TopHeaderBarRect != null)
             {
+                TopHeaderBarRect.DOKill();
                 TopHeaderBarRect.DOAnchorPos(targetPos, 0.4f, Ease.OutQuad);
             }
             if (DropdownChevronButton != null)
             {
+                DropdownChevronButton.transform.DOKill();
                 DropdownChevronButton.transform.DORotate(new Vector3(0f, 0f, _topBarExpanded ? 0f : 180f), 0.35f, Ease.OutQuad);
             }
         }
@@ -652,6 +670,8 @@ namespace BG3DiceSystem.UI
         {
             if (target != null)
             {
+                target.DOKill();
+                target.localScale = Vector3.one;
                 target.DOPunchScale(new Vector3(0.15f, -0.15f, 0f), 0.2f);
             }
         }

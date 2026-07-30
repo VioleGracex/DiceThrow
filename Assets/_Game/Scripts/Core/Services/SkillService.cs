@@ -81,7 +81,7 @@ namespace BG3DiceSystem.Core.Services
         {
             if (index < 0 || index >= _availableSkills.Count) return;
             _currentSkill = _availableSkills[index];
-            _baseModifier = _currentSkill.DefaultModifier;
+            _baseModifier = 0;
             OnSkillChanged?.Invoke();
             OnModifierChanged?.Invoke();
         }

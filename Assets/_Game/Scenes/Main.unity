@@ -5821,10 +5821,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 32
+  m_fontSize: 49.2
   m_fontSizeBase: 32
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
@@ -8733,6 +8733,7 @@ MonoBehaviour:
   SingleDieToggle: {fileID: 1265945169}
   AdvantageToggle: {fileID: 1969382200}
   HistoryTabButton: {fileID: 0}
+  AutoTestButton: {fileID: 0}
   ModifierScrollRect: {fileID: 700651019}
   ModifierCardsContainer: {fileID: 2120222777}
   ModifierCountText: {fileID: 933146958}
@@ -9293,19 +9294,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BG3DiceSystem.UI.ResultView
   ViewCanvasGroup: {fileID: 1229485648}
-  DieAContainer: {fileID: 0}
-  DieBContainer: {fileID: 0}
-  DCText: {fileID: 0}
-  DieAText: {fileID: 0}
-  DieBText: {fileID: 0}
   TakenText: {fileID: 1704931673}
-  ModifierText: {fileID: 0}
   TotalText: {fileID: 1472885963}
   StatusBadgeText: {fileID: 726918154}
   StatusBadgeBackground: {fileID: 233250486}
-  CardModifierValueText: {fileID: 0}
-  CardProfBonusValueText: {fileID: 0}
-  CardDCValueText: {fileID: 0}
   ModifierCardsRow: {fileID: 2015077308}
   ResultCardsContainer: {fileID: 1720510529}
   ResultCardsScrollRect: {fileID: 2015077310}
@@ -11011,6 +11003,8 @@ MonoBehaviour:
   SkillCheckView: {fileID: 1140731558}
   ResultView: {fileID: 1229485647}
   HistoryView: {fileID: 314006934}
+  AutoPlayTestView: {fileID: 0}
+  AutoPlayTestRunner: {fileID: 0}
 --- !u!114 &1395046912
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13399,7 +13393,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 75}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1720510530
 MonoBehaviour:
@@ -13414,7 +13408,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 2
-  m_VerticalFit: 0
+  m_VerticalFit: 2
 --- !u!114 &1720510531
 MonoBehaviour:
   m_ObjectHideFlags: 0

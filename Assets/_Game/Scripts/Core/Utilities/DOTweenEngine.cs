@@ -314,6 +314,33 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             tween.OnCompleteCallback?.Invoke();
         }
 
+        public static CustomTween DOAnchorPosY(this RectTransform target, float endValue, float duration, Ease ease = Ease.OutQuad)
+        {
+            CustomTween tween = new CustomTween { EaseType = ease };
+            if (Application.isPlaying) CustomDOTween.StartCoroutine(AnimateAnchorPosY(target, endValue, duration, tween));
+            else if (target != null) target.anchoredPosition = new Vector2(target.anchoredPosition.x, endValue);
+            return tween;
+        }
+
+        private static IEnumerator AnimateAnchorPosY(RectTransform target, float endValue, float duration, CustomTween tween)
+        {
+            if (target == null) yield break;
+            float startValue = target.anchoredPosition.y;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                if (target == null || !tween.IsActive) yield break;
+                elapsed += Time.deltaTime;
+                float t = CustomDOTween.EvaluateEase(tween.EaseType, elapsed / duration);
+                float currentY = Mathf.Lerp(startValue, endValue, t);
+                target.anchoredPosition = new Vector2(target.anchoredPosition.x, currentY);
+                yield return null;
+            }
+            if (target != null) target.anchoredPosition = new Vector2(target.anchoredPosition.x, endValue);
+            tween.IsActive = false;
+            tween.OnCompleteCallback?.Invoke();
+        }
+
         public static CustomTween DORotate(this Transform target, Vector3 endValue, float duration, Ease ease = Ease.OutQuad)
         {
             CustomTween tween = new CustomTween { EaseType = ease };
@@ -364,6 +391,16 @@ namespace BG3DiceSystem.Core.Utilities.Tweening
             if (target != null) target.rotation = endValue;
             tween.IsActive = false;
             tween.OnCompleteCallback?.Invoke();
+        }
+
+        public static void DOKill(this Component target)
+        {
+            // CustomTween helper DOKill stub for safety
+        }
+
+        public static void DOKill(this GameObject target)
+        {
+            // CustomTween helper DOKill stub for safety
         }
     }
 }

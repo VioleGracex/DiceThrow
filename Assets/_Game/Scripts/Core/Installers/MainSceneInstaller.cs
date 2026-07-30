@@ -8,6 +8,7 @@ using BG3DiceSystem.Gameplay.Roll;
 using BG3DiceSystem.Gameplay.Skills;
 using BG3DiceSystem.Audio;
 using BG3DiceSystem.Effects;
+using BG3DiceSystem.Testing;
 
 namespace BG3DiceSystem.Core.Installers
 {
@@ -67,6 +68,9 @@ namespace BG3DiceSystem.Core.Installers
             Container.Bind<IEffectsService>().To<EffectsService>().AsSingle();
             Container.Bind<IAudioService>().To<AudioService>().AsSingle();
             Container.Bind<IRollService>().To<RollService>().AsSingle();
+
+            // Bind Testing Services
+            Container.Bind<AutoPlayTestRunner>().FromComponentInHierarchy().AsSingle();
         }
         #endregion
     }

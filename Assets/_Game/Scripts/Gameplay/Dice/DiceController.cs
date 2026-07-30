@@ -7,6 +7,7 @@ namespace BG3DiceSystem.Gameplay.Dice
     public class DiceController : MonoBehaviour
     {
         public event Action<Transform, float> OnImpact;
+        public event Action OnDiceClicked;
 
         [Header("Components")]
         public Rigidbody RigidBody;
@@ -14,7 +15,7 @@ namespace BG3DiceSystem.Gameplay.Dice
 
         [Header("Roll Zone Boundary")]
         public Vector3 RollCenter = new Vector3(1000f, 1000f, 0f);
-        public float RollZoneRadius = 1.0f;
+        public float RollZoneRadius = 1.2f;
 
         private DiceSettingsSO _settings;
         private float _sleepThreshold = 0.05f;
@@ -32,19 +33,19 @@ namespace BG3DiceSystem.Gameplay.Dice
             if (RigidBody != null)
             {
                 RigidBody.useGravity = false;
-                RigidBody.linearDamping = 2.5f;
-                RigidBody.angularDamping = 2.5f;
+                RigidBody.linearDamping = 0.8f;
+                RigidBody.angularDamping = 0.6f;
                 RigidBody.constraints = RigidbodyConstraints.FreezePositionZ;
                 RigidBody.collisionDetectionMode = CollisionDetectionMode.Continuous;
             }
 
             PhysicsMaterial diceMaterial = new PhysicsMaterial("DiceRollMaterial")
             {
-                bounciness = 0f,
-                bounceCombine = PhysicsMaterialCombine.Minimum,
-                dynamicFriction = 0.9f,
-                staticFriction = 0.9f,
-                frictionCombine = PhysicsMaterialCombine.Maximum
+                bounciness = 0.2f,
+                bounceCombine = PhysicsMaterialCombine.Maximum,
+                dynamicFriction = 0.4f,
+                staticFriction = 0.4f,
+                frictionCombine = PhysicsMaterialCombine.Minimum
             };
 
             foreach (var col in GetComponentsInChildren<Collider>(true))
@@ -61,7 +62,7 @@ namespace BG3DiceSystem.Gameplay.Dice
             Vector3 pos = transform.position;
             pos.z = RollCenter.z;
 
-            // Constrain die movement within small circular middle area
+            // Constrain die movement within circular middle area
             Vector2 offset = new Vector2(pos.x - RollCenter.x, pos.y - RollCenter.y);
             float dist = offset.magnitude;
 
@@ -75,14 +76,14 @@ namespace BG3DiceSystem.Gameplay.Dice
                 Vector2 vel2D = new Vector2(vel.x, vel.y);
                 if (Vector2.Dot(vel2D, dir) > 0)
                 {
-                    vel2D = Vector2.Reflect(vel2D, -dir) * 0.5f;
+                    vel2D = Vector2.Reflect(vel2D, -dir) * 0.7f;
                     RigidBody.linearVelocity = new Vector3(vel2D.x, vel2D.y, 0f);
                 }
             }
             else
             {
                 // Gentle inward spring pulling towards center for natural swirl
-                Vector2 springForce = -offset * 2.0f;
+                Vector2 springForce = -offset * 3.0f;
                 RigidBody.AddForce(new Vector3(springForce.x, springForce.y, 0f), ForceMode.Acceleration);
             }
 
@@ -106,10 +107,10 @@ namespace BG3DiceSystem.Gameplay.Dice
             RigidBody.isKinematic = false;
             ConfigurePhysics();
 
-            float minForce = _settings != null ? _settings.MinThrowForce : 3f;
-            float maxForce = _settings != null ? _settings.MaxThrowForce : 5f;
-            float minTorque = _settings != null ? _settings.MinTorque : 10f;
-            float maxTorque = _settings != null ? _settings.MaxTorque : 20f;
+            float minForce = _settings != null ? Mathf.Max(_settings.MinThrowForce, 5f) : 5f;
+            float maxForce = _settings != null ? Mathf.Max(_settings.MaxThrowForce, 9f) : 9f;
+            float minTorque = _settings != null ? Mathf.Max(_settings.MinTorque, 25f) : 25f;
+            float maxTorque = _settings != null ? Mathf.Max(_settings.MaxTorque, 45f) : 45f;
 
             // Random horizontal direction inside screen plane
             Vector2 randomCircle = UnityEngine.Random.insideUnitCircle.normalized;
@@ -118,7 +119,7 @@ namespace BG3DiceSystem.Gameplay.Dice
             float forceMag = UnityEngine.Random.Range(minForce, maxForce);
             RigidBody.AddForce(forceDir * forceMag, ForceMode.Impulse);
 
-            // Random 3D torque for natural horizontal tumbling and rolling
+            // High 3D torque for enthusiastic tumbling and spinning
             Vector3 torque = UnityEngine.Random.onUnitSphere * UnityEngine.Random.Range(minTorque, maxTorque);
             RigidBody.AddTorque(torque, ForceMode.Impulse);
         }
@@ -145,6 +146,11 @@ namespace BG3DiceSystem.Gameplay.Dice
                 return ResultDetector.GetFacingRotation(faceValue, cameraDir);
             }
             return transform.rotation;
+        }
+
+        private void OnMouseDown()
+        {
+            OnDiceClicked?.Invoke();
         }
 
         private void OnCollisionEnter(Collision collision)
